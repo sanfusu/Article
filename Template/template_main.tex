@@ -1,4 +1,5 @@
 \usepackage{amsmath}
+\usepackage[thmmarks,thref,hyperref,standard]{ntheorem}
 \usepackage{ulem}
 \usepackage{xcolor}
 \usepackage{hyperref} % 尽量确保是最后一个加载包
@@ -8,3 +9,14 @@
     colorlinks=true,
     pdfborder={0,0,0}
 }
+% \theoremstyle{definition} \newtheorem{def}{定义}[section]
+% \theoremnumbering{fnsymbol}
+% \theoremstyle{change}
+% \theoremheaderfont{\bfseries}
+\theoremsymbol{{\scriptsize$\clubsuit$}}
+\theoremseparator{:}
+\renewtheorem{Definition}{Def.}
+
+\theoremsymbol{{\scriptsize$\diamondsuit$}}
+\theoremheaderfont{\bfseries}
+\renewtheorem{Remark}{Note.}
