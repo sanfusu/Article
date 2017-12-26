@@ -1,0 +1,24 @@
+\documentclass[UTF8]{ctexart}
+    \input{../Template/template_main.tex}
+\begin{document}
+% \begin{titlepage}
+    \title{数据结构定义}
+    \author{sanfusu}
+    \date{\today}
+    \maketitle
+% \end{titlepage}
+\section{树}
+
+%\renewtheorem{Definition}{(a,b)-tree}
+\begin{Definition}
+    (a,b)-tree:
+    所有叶子节点都具有相同深度的搜索树。
+    所有的内部节点拥有 $[a,b]$ 个子节点，其中 $a$ 和 $b$ 满足条件
+    $2\le a \le \frac{b+1}{2}$。非叶子节点的根节点则至少有两个子节点。
+\end{Definition}
+\begin{Remark}
+    (a,b)-tree 属于搜索树，B-tree($1 \le a$) 则是 (a,b)-tree 的一种。
+\end{Remark}
+
+
+\end{document}

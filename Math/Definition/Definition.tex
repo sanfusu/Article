@@ -1,0 +1,36 @@
+\documentclass[UTF8]{ctexart}
+    \input{../../Template/template_main.tex}
+
+
+\begin{document}
+% \begin{titlepage}
+    \title{定理及证明}
+    \author{sanfusu}
+    \date{\today}
+    \maketitle
+% \end{titlepage}
+
+\section{数列}
+\begin{Definition}
+    无穷多个数的排列被称为数列，通常记为 ${a_n}$。
+    这里的下标依次取遍正整数集 $N^*$。
+\end{Definition}
+
+\subsection{收敛数列}
+\begin{Definition}
+    设 ${a_n}$ 是一个数列，$a$ 是一个实数，对任意给定的 $\varepsilon > 0$，
+    $\exists N \in N^*$ 使得对任意 $n>N$ 有
+    \begin{equation*}
+        |a_n-a|<\varepsilon,
+    \end{equation*}
+    则说数列${a_n}$ 当 $n$ 趋向于无穷大时以 $a$ 为极限，记为
+    \begin{equation*}
+        \lim_{n\to \infty} = a,
+    \end{equation*}
+    也可简记为 $a_n \to a (n \to \infty)$。我们也说数列 ${a_n}$ 收敛于 $a$。
+    存在极限的数列称为收敛数列；不收敛的数列称为发散数列。
+\end{Definition}
+\begin{remark}
+    数列极限为实数，但是否可以考虑扩展为复数域。
+\end{remark}
+\end{document}
