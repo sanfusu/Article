@@ -1,0 +1,51 @@
+% author:	 sanfusu
+% contact:	 sanfusu@foxmail.com
+
+\documentclass[UTF8]{ctexart}
+
+\ctexset {
+	section={
+		name={第, 节},
+	}
+}
+
+
+\begin{document}
+	\title{Unicode}
+	\author{sanfusu}
+	\maketitle
+	
+	\begin{abstract}
+		Unicode 说来只是一种编码而已，但其具体的编码方式一直困惑于心。UTF-8、UTF-16 等不同术语的区别也是从未做过详细的区分，毕竟人们乐于拿来主义。
+		本文重点解答关于 Unicode 的各种疑惑。
+	\end{abstract}
+	
+	\section{术语解释}
+	\begin{itemize}
+		\item [UCS]{通用字符集}
+
+	\end{itemize}
+
+	\section{目的}
+	Unicode 用于编码底层字符\footnote{基本书写单位，而非各种自行变体，可以理解为字体}。在文本处理过程中，Unicode 也只是提供单一的编码点\footnote{实际上只是一个数字或者编号，和 ASCII 编码类似的概念，实际渲染交由软件处理}。
+
+	\section{UTF-8}
+	1 \textasciitilde{} 4 个字节。一个字节用于 ASCII 的 128 个编码点。
+	
+	\section{USC-2}
+	USC-2 是 UTF-16 的前身，使用两个字节来表示 Unicode 中的前 65536 编码点，也被称为 BMP\footnote{Basic Multilingual Plane，基础多语言面板} 。但事实上目前 Unicode 一共有 17 个板块，共 1114112 个编码点，远超过 USC-2 所能表示的范围。
+		
+	\section{UTF-16}
+	能够编码 Unicode 中所有的编码点。UTF-16 起源于 UCS-2 （固定 16 bit 长度的通用字符集，即两个字节），但由于 16 bit 不足以容纳全部的编码点，故采用了可变长度的编码方式。	
+	每一个编码点可以由一或两个 16-bit 的编码单元组成，也就是 2 \~{} 4个字节。
+	
+	UTF-16 中的 16 bit 部分和 UCS-2 保持一致，4 字节编码中用于其他面板，但不能包含 U+D800 -- U+DFFF 范围内的编码点\footnote{问题：该保留范围出现的意义？}。
+	
+	UTF-16 编码主要用于 Windows 和一些编程语言（Java、JavaScript），Unix 类系统中用的较少。
+	WHATWG 因安全问题建议避免使用 UTF-16。
+	
+
+	
+	
+	
+\end{document}

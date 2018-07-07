@@ -1,0 +1,50 @@
+% 需要 litemize 的统一样式
+% 需要一个 BNF 的代码语法格式
+\usepackage{textcomp, listings, xcolor-material}
+\usepackage{hyperref}
+\usepackage[T1]{fontenc}
+
+\ctexset {
+	chapter/format += \raggedleft,
+	section/name = {\dag{ },},
+	section/number = \Roman{section},
+	section/format += \raggedright,
+%	subsection/number=\arabic{subsection},
+%	subsection/format += \centering,
+}
+
+\hypersetup{
+	colorlinks,% 
+}
+
+\lstdefinelanguage{golang} {
+	morekeywords={
+		type, package, import, func,
+		int, int32, int64,string
+	},
+	morekeywords=[2] {make},
+	morekeywords=[3] {map, interface},
+	sensitive=true,
+	morecomment=[l]{//},
+	morecomment=[s]{/*}{*/},
+	morestring=[b]',
+	morestring=[b]",
+	morestring=[b]`,
+}
+
+\lstset{
+	basicstyle=\small,
+	keywordstyle=\bfseries \color{MaterialCyan},
+	keywordstyle=[2]{\bfseries \color{MaterialTeal}},
+	keywordstyle=[3]{\bfseries \color{MaterialIndigo}},
+	stringstyle=\textbf{}  \color{MaterialRed},
+	commentstyle=\itshape\color{MaterialBlueGrey},
+	tabsize=4,
+	upquote=true,
+	showstringspaces=false,
+	numbers=left,
+	xleftmargin=4em,
+	xrightmargin=2em,
+	framexleftmargin=0em,
+	texcl=true,
+}

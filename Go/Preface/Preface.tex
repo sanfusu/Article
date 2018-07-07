@@ -1,0 +1,33 @@
+% !TeX root = ../Main
+
+\chapter{Preface}
+%\section{目的以及本文档主旨}
+\textbf{首先这一份关于 Golang 的文档，由最初的日常笔记发展而来。写字者本人并不熟悉 golang，这份册子也仅是为了学习而创建。}
+
+\textbf{本文档并不旨在教会任何人关于 Golang 的任何东西，但会尽可能严谨的描述 Golang 的各部细节。目前本册子正在编写之中，任何内容都会随着时间的推移而补充。}
+
+\section{综计}
+\subsection{字符编码}
+Go 语言源文件使用 UTF-8 编码，这意味着一个字符不一定只有一个字节。参考 rune 字面值，详见 页\pageref{rune-literal}。
+
+\paragraph{记号}
+记号形成 Go 语言的词汇。有四种类型记号：
+\begin{itemize}
+	\item identifiers---标识符
+	\item keywords---关键词
+	\item operators---运算符
+	\item punctuation---标点符
+	\item literals---字面值
+\end{itemize}
+
+\paragraph{分号插入规则}
+\begin{enumerate}
+	\item  如果行末记号是以下几种情况，则自动插入:
+	\begin{enumerate}
+		\item 标识符
+		\item 整型、浮点、虚数、rune或者字符串字面值
+		\item  break, continue, fallthrough, return 中的一个关键词
+		\item  \verb|++|, \verb|--|, \verb|)|, \verb|]|, 或者 \verb|}| 中的一个运算符和标点符
+	\end{enumerate}
+	\item  如果复杂语句占据单行，则可以在 \verb|)| 和 \verb|}| 之前省略分号
+\end{enumerate}
