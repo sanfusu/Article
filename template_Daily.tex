@@ -1,8 +1,8 @@
 % 需要 litemize 的统一样式
 % 需要一个 BNF 的代码语法格式
-\usepackage{textcomp, listings, xcolor-material}
-\usepackage{hyperref}
+\usepackage{textcomp, listings, xcolor-material,enumitem}
 \usepackage[T1]{fontenc}
+\usepackage{hyperref}
 
 \ctexset {
 	chapter/format += \raggedleft,
@@ -19,11 +19,24 @@
 
 \lstdefinelanguage{golang} {
 	morekeywords={
-		type, package, import, func,
-		int, int32, int64,string
-	},
-	morekeywords=[2] {make},
-	morekeywords=[3] {map, interface},
+		break,default,func,interface,select,
+		case,defer,go,map,struct,
+		chan,else,goto,package,switch,
+		const,fallthrough,if,range,type,
+		continue,for,import,return,var,
+	},	% 关键词
+	morekeywords=[2] {
+		bool,byte,complex64,complex128,error,float32,float64,
+		int,int8,int16,int32,int64,rune,string,
+		uint,uint8,uint16,uint32,uint64,uintptr,
+	},	% 预声明类型
+	morekeywords=[3] {
+		true,false,iota,nil
+	}, 	% 预声明常量，nil 这里视为常量
+	morekeywords=[4] {
+		append,cap,close,complex,copy,delete,imag,len,
+		make,new,panic,print,println,real,recover
+	}, % 预声明函数
 	sensitive=true,
 	morecomment=[l]{//},
 	morecomment=[s]{/*}{*/},
@@ -31,20 +44,51 @@
 	morestring=[b]",
 	morestring=[b]`,
 }
+\lstdefinelanguage{EBNF} {
+	morestring=[b]',
+	morestring=[b]",
+	morecomment=[s]{/*}{*/},
+}
 
 \lstset{
-	basicstyle=\small,
-	keywordstyle=\bfseries \color{MaterialCyan},
-	keywordstyle=[2]{\bfseries \color{MaterialTeal}},
-	keywordstyle=[3]{\bfseries \color{MaterialIndigo}},
-	stringstyle=\textbf{}  \color{MaterialRed},
-	commentstyle=\itshape\color{MaterialBlueGrey},
+	basicstyle=\small \ttfamily,
+	stringstyle=\bfseries \color{MaterialRed},
+	commentstyle=\itshape \color{MaterialBlueGrey},
 	tabsize=4,
 	upquote=true,
-	showstringspaces=false,
-	numbers=left,
+	showstringspaces=true,
+	numbers=none,
 	xleftmargin=4em,
 	xrightmargin=2em,
 	framexleftmargin=0em,
 	texcl=true,
+	flexiblecolumns=true,
+	fontadjust=true,
+	columns=fullflexible,
+	breaklines=true,
+	keepspaces=true,
+	escapechar=@,
+	frame=single,
+	frameround=tttt,
+	rulecolor=\color{MaterialBlueGrey},
+}
+\lstdefinestyle{golang}{
+	language=golang,
+	keywordstyle=\bfseries \color{MaterialCyan},		% keywords
+	keywordstyle=[2]{\bfseries \color{MaterialTeal}}, 	% 预声明类型
+	keywordstyle=[3]{\bfseries \color{MaterialIndigo}}, % 预声明常量
+	keywordstyle=[4]{\bfseries \color{MaterialIndigo}}, % 预声明函数
+}
+\lstdefinestyle{EBNF}{
+	language=EBNF,
+	identifierstyle = \bfseries\color{MaterialCyan},
+}
+%\newenvironment*{code}[1][golang]
+%{\begin{lstlisting}[style=#1]}
+%{\end{lstlisting}}
+\newcommand{\hdots}{…}
+\hypersetup{
+	colorlinks=true,
+	allcolors=MaterialCyan,
+	anchorcolor=MaterialCyan,
 }
