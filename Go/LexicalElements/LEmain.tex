@@ -106,7 +106,7 @@ decimals  = decimal_digit { decimal_digit } .
 exponent  = ( "e" | "E" ) [ "+" | "-" ] decimals .
 \end{lstlisting}
 
-\begin{lstlisting}[style=EBNF]
+\begin{lstlisting}[style=golang]
 0.
 72.40
 072.40  // == 72.40
@@ -138,3 +138,4 @@ imaginary_lit = (decimals | float_lit) "i" .
 \end{lstlisting}
 
 \input{./LexicalElements/RuneLiterals}
+\input{./LexicalElements/StringLiterals}

@@ -4,13 +4,13 @@
 % @Note 脚注或许可以去除
 语法格式通过扩展的巴克斯范式\footnote{Extended Backus-Naur Form(EBNF)}表示。
 \begin{lstlisting}[style=EBNF]
-	Production	= production_name "=" [ Expression ] "." .
-	Expression 	= Alternative { "|" ALternative } .
-	Alternative = Term { Term } .
-	Term        = production_name | token [ "…" token ] | Group | Option | Repetition .
-	Group       = "(" Expression ")" .
-	Option      = "[" Expression "]" .
-	Repetition  = "{" Expression "}" .
+Production	= production_name "=" [ Expression ] "." .
+Expression 	= Alternative { "|" ALternative } .
+Alternative = Term { Term } .
+Term        = production_name | token [ "…" token ] | Group | Option | Repetition .
+Group       = "(" Expression ")" .
+Option      = "[" Expression "]" .
+Repetition  = "{" Expression "}" .
 \end{lstlisting}
 
 Productions 是由 terms 以及下列操作符构成的表达式，按递增优先级如下：

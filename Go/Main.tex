@@ -1,6 +1,7 @@
-\documentclass[UTF8]{ctexbook}
+\documentclass[UTF8]{ctexrep}
 \input{../template_Daily}
 
+\newcommand{\rune}{符文} % @FIXME 尚未确定 rune 译名
 %\lstset{
 %	language=golang
 %}
@@ -10,13 +11,15 @@
 
 \begin{document}
 \maketitle
-\frontmatter
-\include{./Preface/Preface}
-\mainmatter
+%\frontmatter
+%\include{./Preface/Preface}
+%\mainmatter
 \include{./Introduction}
 \include{./Notation}
 \include{./SourceCodeRepresentation/scr}
 \include{./LexicalElements/LEmain}
+\include{./Constants}
+\include{./Variables}
 \include{./Type/Type}
 \end{document}
 
