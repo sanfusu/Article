@@ -1,0 +1,140 @@
+% !TeX root = ../Main.tex
+
+\chapter{Lexical elements}
+
+\section{注释}
+注释充当程序文档。有两种形式：
+\begin{enumerate}
+    \item 行注释以字符序列 \verb|//| 开头，并且结束于行尾。
+    \item 通用注释起始于 \verb|/*| 并且结束于随后所遇到的第一个字符序列 \verb|*/|。
+\end{enumerate}
+注释不能起始于一个 rune 或者字符串文字，或者一个注释内部。
+不包含换行的通用注释和空格的作用一样。
+任何其他注释都和换行的作用一致。
+
+\section{记号}
+记号形成 Go 语言的词汇。
+有四种类别的记号：\emph{标识符}，\emph{关键词}，\emph{操作符}和\emph{标点符}，以及\emph{字面量}。
+\emph{White space} 由 空格 (U+0020)，水平制表 (U+0009)，回车 (U+000D) 和换行 (U+000A) 组成，
+如果空白字符没起到分割记号的作用，则将会被忽视。
+另外，换行和文件结尾会触发分号的插入。
+当输入分解为记号时，下一个记号将会是形成有效记号的最长字符序列。
+
+\section{分号}
+形式化语法使用分号 ``;'' 作为产生式的终止符。
+Go 程序可以通过以下两个规则省略大部分分号：
+\begin{enumerate}
+\item 当输入分解为语言符号时，如果一行的最后一个语言符号为以下几种情况，则会自动插入到行末。
+	\begin{itemize}
+		\item 标志符
+		\item 整型, 浮点，虚数，rune，或者字符串文字
+		\item 关键词 \verb|break|, \verb|continue|, \verb|fallthrough|, 或者 \verb|return| 中的一个。
+		\item \verb|++, --, ), ]| 或 \verb|}| 运算符和标点符号中的一个。
+	\end{itemize}
+\item 为了能让复合语句占据单行，\verb|)| 和 \verb|}| 前的分号可以省略。 
+\end{enumerate}
+为了反映惯用的用法，本文档中的代码会使用以上规则来省略掉分号。
+
+
+\section{标识符}
+标识符命名程序条目，比如变量和类型。一个标识符是一个或者多个字母和数字的序列。
+标识符中的第一个字符必须是一个字母。
+\begin{lstlisting}[style=EBNF]
+identifier = letter { letter | @\hyperref[unicodeDigit]{unicode\_digit}@ } .
+\end{lstlisting}
+
+\begin{lstlisting}[style=golang]
+a
+_x9
+ThisVariableIsExported
+@$\alpha\beta$@
+\end{lstlisting}
+部分标识符是预先声明的。
+
+\section{关键词}
+以下保留的关键词，并且不能用作标识符。
+\begin{lstlisting}[style=golang]
+break        default      func         interface    select
+case         defer        go           map          struct
+chan         else         goto         package      switch
+const        fallthrough  if           range        type
+continue     for          import       return       var
+\end{lstlisting}
+
+\section{运算符和标点符号}
+以下字符序列标识运算符（包括赋值操作符）以及标点符号：
+\begin{lstlisting}[style=golang]
++    &     +=    &=     &&    ==    !=    (    )
+-    |     -=    |=     ||    <     <=    [    ]
+*    ^     *=    ^=     <-    >     >=    {    }
+/    <<    /=    <<=    ++    =     :=    ,    ;
+%    >>    %=    >>=    --    !     ...   .    :
+     &^          &^=
+\end{lstlisting}
+
+\section{整型字面量}
+一个整型字面量是标识整型常量的一个数字序列。
+可选前缀可以设置一个非十进制基：0 为八进制，0x 或者 0X 为十六进制。
+在十六进制字面量中，字母 a-f 和 A-F 代表 10 到 15。
+\begin{lstlisting}[style=EBNF]
+int_lit     = decimal_lit | octal_lit | hex_lit .
+decimal_lit = ( "1" … "9" ) { decimal_digit } .
+octal_lit   = "0" { octal_digit } .
+hex_lit     = "0" ( "x" | "X" ) hex_digit { hex_digit } .
+\end{lstlisting}
+
+\begin{lstlisting}[style=golang]
+42
+0600
+0xBadFace
+170141183460469231731687303715884105727
+\end{lstlisting}
+
+
+\section{浮点字面量}
+浮点字面量是浮点常量的十进制表示。
+其具有一个整数部分，一个十进制小数点，一个小数部分，和一个指数部分。
+整数和小数部分有十进制数组成；
+指数部分为 e 或者 E 后面紧跟着一个可选的有符号十进制指数。
+可以省略整数部分或者小数部分中的一个；
+类似小数点或者指数中的一个可以被省略。
+\begin{lstlisting}[style=golang]
+float_lit = decimals "." [ decimals ] [ exponent ] |
+            decimals exponent |
+            "." decimals [ exponent ] .
+decimals  = decimal_digit { decimal_digit } .
+exponent  = ( "e" | "E" ) [ "+" | "-" ] decimals .
+\end{lstlisting}
+
+\begin{lstlisting}[style=EBNF]
+0.
+72.40
+072.40  // == 72.40
+2.71828
+1.e+0
+6.67428e-11
+1E6
+.25
+.12345E+5
+\end{lstlisting}
+
+\section{虚数字面量}
+虚数字面量是复数常量虚部的十进制表示。
+他由后面跟着字母 i 的浮点字面量或十进制整数组成。
+\begin{lstlisting}[style=EBNF]
+imaginary_lit = (decimals | float_lit) "i" .
+\end{lstlisting}
+
+\begin{lstlisting}[style=golang]
+0i
+011i  // == 11i
+0.i
+2.71828i
+1.e+0i
+6.67428e-11i
+1E6i
+.25i
+.12345E+5i
+\end{lstlisting}
+
+\input{./LexicalElements/RuneLiterals}

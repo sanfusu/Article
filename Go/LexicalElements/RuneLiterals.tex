@@ -1,0 +1,10 @@
+% !TeX root = ../Main.tex
+\newcommand{\rune}{符文}
+
+\section{Rune literals}
+一个\rune{}字面量表示一个\rune{}常量，
+一个用来标识 Unicode 编码点的整数值。
+一个\rune{}字面量使用单引号包含一个或多个字符来表达，如 \verb|'x'| 或者 \verb|'\n'|。
+除换行和未转义的单引号外，任何字符都可以出现在单引号内。
+使用单引号包含的字符代表了字符本身的 Unicode 值，
+但是以反斜杠开头的多字符序列会以各种格式对值进行编码。
