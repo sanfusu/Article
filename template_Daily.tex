@@ -57,7 +57,7 @@
 	commentstyle=\itshape \color{MaterialBlueGrey},
 	tabsize=4,
 	upquote=true,
-	showstringspaces=true,
+	showstringspaces=false,
 	numbers=none,
 	xleftmargin=4em,
 	xrightmargin=4em,
@@ -84,14 +84,22 @@
 	language=EBNF,
 	identifierstyle = \bfseries\color{MaterialCyan},
 }
+
+\setlist{noitemsep}
+\setlist[1]{labelindent=\parindent}
+\setlist[description]{font=\ttfamily\bfseries}
+
 %\newenvironment*{code}[1][golang]
 %{\begin{lstlisting}[style=#1]}
 %{\end{lstlisting}}
 \newcommand{\hdots}{…}
+
 \hypersetup{
 	colorlinks=true,
 	allcolors=MaterialCyan,
 	anchorcolor=MaterialCyan,
+	pdfauthor=sanfusu,
+	pdfkeywords=golang,
 }
 
 
