@@ -222,3 +222,211 @@ struct {
 	serverIP6 uint64 `protobuf:"2"`
 }
 \end{lstlisting}
+
+
+\section{指针类型}
+一个指针类型表示指向给定类型变量的所有指针集合，该给定类型被称为指针的\emph{基类型}。
+未初始化指针的值为 \lstinline|nil|
+\begin{lstlisting}[style=EBNF]
+PointerType = "*" BaseType .
+BaseType    = Type .
+\end{lstlisting}
+
+\begin{lstlisting}[style=golang]
+*Point
+*[4]int
+\end{lstlisting}
+
+\section{函数类型}
+一个函数类型表示所有带有相同类型的参数和结果的函数。
+未初始化的函数类型变量的值为 \lstinline|nil|。
+\begin{lstlisting}[style=EBNF]
+FunctionType   = "func" Signature .
+Signature      = Parameters [ Result ] .
+Result         = Parameters | Type .
+Parameters     = "(" [ ParameterList [ "," ] ] ")" .
+ParameterList  = ParameterDecl { "," ParameterDecl } .
+ParameterDecl  = [ IdentifierList ] [ "..." ] Type .
+\end{lstlisting}
+在参数列表或结果中，参数名和结果民（标识符列表）必须全部呈现或者全部省略。
+如果呈现，每一个名字代表一个特定类型的参数或结果，签字中所有非空白名必须是独一无二的。
+如果缺省，每一个类型代表给类型的一个参数或结果。
+参数和结果列表必须使用圆括弧包含，除非只有一个未命名结果。
+
+函数签字里面最后的输入参数类型可以有一个 \dots{} 前缀。
+具有这种参数的函数被称为可变参数函数\footnote{variadic}，这种参数可以视为 0 个或多个参数。
+\begin{lstlisting}[style=golang]
+func()
+func(x int) int
+func(a, _ int, z float32) bool
+func(a, b int, z float32) (bool)
+func(prefix string, values ...int)
+func(a, b int, z float64, opt ...interface{}) (success bool)
+func(int, int, float64) (float64, *[]int)
+func(n int) func(p *T)
+\end{lstlisting}
+
+
+\section{接口类型}
+一个接口类型表示一个被称为接口的方法集。
+一个接口类型变量可以存储任何方法集为接口超集的类型的变量。
+这种类型被称为\lstinline|接口的实现|。
+未初始化的接口类型变量的值为 \lstinline|nil|。
+\begin{lstlisting}[style=EBNF]
+InterfaceType      = "interface" "{" { MethodSpec ";" } "}" .
+MethodSpec         = MethodName Signature | InterfaceTypeName .
+MethodName         = identifier .
+InterfaceTypeName  = TypeName .
+\end{lstlisting}
+
+一个接口类型的方法集中，每一个方法必须具有独一无二的非空白名。
+\begin{lstlisting}[style=golang]
+// A simple File interface
+interface {
+	Read(b Buffer) bool
+	Write(b Buffer) bool
+	Close()
+}
+\end{lstlisting}
+
+可以有多个类型实现同一个接口。比如，两个类型 \lstinline|S1| 和 \lstinline|S2| 可以具有方法集
+\begin{lstlisting}[style=golang]
+func (p T) Read(b Buffer) bool { return … }
+func (p T) Write(b Buffer) bool { return … }
+func (p T) Close() { … }
+\end{lstlisting}
+
+（其中 \lstinline|T| 既可以代表 \lstinline|S1| 也可以代表 \lstinline|S2|），
+同时被 \lstinline|S1| 和 \lstinline|S2| 实现，\lstinline|S1| 和 \lstinline|S2| 也可以有其余（共享）的方法。
+
+一个类型可以实现任何由其方法子集组成的接口，因此一个类型可以实现几个不同的接口。
+比如，所有的类型都会实现一个空接口。
+\begin{lstlisting}[style=golang]
+interface{}
+\end{lstlisting}
+
+于此类似，下面出现在一个类型声明中的接口说明，定义了一个名为 \lstinline|Locker| 的接口：
+\begin{lstlisting}[style=golang]
+type Locker interface {
+	Lock()
+	Unlock()
+}
+\end{lstlisting}
+
+如果 \lstinline|S1| 和 \lstinline|S2| 也实现了
+\begin{lstlisting}[style=golang]
+func (p T) Lock() { … }
+func (p T) Unlock() { … }
+\end{lstlisting}
+则他们在实现 \lstinline|File| 接口的同时实现了 \lstinline|Locker| 接口。
+
+一个接口 \lstinline|T| 可以使用名为 \lstinline|E| 的接口类型来代替方法说明。
+这称为将接口 \lstinline|E| 嵌入到 \lstinline|T| 中，这种方式会将 \lstinline|E| 的所有方法（包括导出和未导出的）加入到接口 \lstinline|T| 中。
+\begin{lstlisting}[style=golang]
+type ReadWriter interface {
+	Read(b Buffer) bool
+	Write(b Buffer) bool
+}
+
+type File interface {
+	ReadWriter  // same as adding the methods of ReadWriter
+	Locker      // same as adding the methods of Locker
+	Close()
+}
+
+type LockedFile interface {
+	Locker
+	File        // illegal: Lock, Unlock not unique
+	Lock()      // illegal: Lock not unique
+}
+\end{lstlisting}
+
+一个接口类型 \lstinline|T| 无法递归的嵌入自身或者任何嵌入 \lstinline|T| 的接口。
+\begin{lstlisting}[style=golang]
+// illegal: Bad cannot embed itself
+type Bad interface {
+	Bad
+}
+
+// illegal: Bad1 cannot embed itself using Bad2
+type Bad1 interface {
+	Bad2
+}
+type Bad2 interface {
+	Bad1
+}
+\end{lstlisting}
+
+\section{图类型}
+一个图是一组无序的单类型元素；该类型被称为元素类型。
+可以通过其他类型的唯一键来索引，即键类型。
+未初始化的图的值为 \lstinline|nil|。
+\begin{lstlisting}[style=EBNF]
+MapType     = "map" "[" KeyType "]" ElementType .
+KeyType     = Type .
+\end{lstlisting}
+
+必须为 key 类型操作数完全定义比较操作符 \lstinline|==| 和 \lstinline|!=|；
+因此 key 类型不能为函数、图、或者切片。
+如果 key 类型是一个接口类型，必须为这些动态 key 值定义比较操作符；
+失败将会导致 run-time panic。
+\begin{lstlisting}[style=golang]
+map[string]int
+map[*T]struct{ x, y float64 }
+map[string]interface{}
+\end{lstlisting}
+
+map 元素的数量被称为长度。
+对于 map \lstinline|m|，可以通过内置函数 \lstinline|len| 来获取长度，并可能会在执行时更改。
+元素可以在执行时使用赋值来添加，并且通过索引表达式来获取；他们可以通过内置函数 \lstinline|delete| 来删除。
+\begin{lstlisting}[style=golang]
+make(map[string]int)
+make(map[string]int, 100)
+\end{lstlisting}
+初始容量并不会限制 map 的大小：map 会根据其存储的元素数量来增加大小。一个 \lstinline|nil| map
+等价于一个空 map，但无法向其中添加元素。
+
+\section{通道类型}
+一个通道通过使用发送和接受特定元素类型的值为并发执行函数提供通讯机制。
+未初始化的通道的值为 \lstinline|nil|
+\begin{lstlisting}[style=EBNF]
+ChannelType = ( "chan" | "chan" "<-" | "<-" "chan" ) ElementType .
+\end{lstlisting}
+
+可选的 \lstinline|<-| 运算符表好似通道方向，发送还是接收。
+如果没有给定方向，则通道是双向的。
+一个通道可以通过转换或赋值限制为只用作发送或者只用作接收。
+\begin{lstlisting}[style=golang]
+chan T          // can be used to send and receive values of type T
+chan<- float64  // can only be used to send float64s
+<-chan int      // can only be used to receive ints
+\end{lstlisting}
+
+\lstinline|<-| 会和最左边的 \lstinline|chan| 关联：
+\begin{lstlisting}[style=golang]
+chan<- chan int    // same as chan<- (chan int)
+chan<- <-chan int  // same as chan<- (<-chan int)
+<-chan <-chan int  // same as <-chan (<-chan int)
+chan (<-chan int)
+\end{lstlisting}
+
+一个新的，且初始化过的通道值可以通过内置函数 \lstinline|make| 来创建，
+\lstinline|make| 函数需要通道类型和可选的容量作为参数：
+\begin{lstlisting}[style=golang]
+make(chan int, 100)
+\end{lstlisting}
+
+容量即元素数量，用来设置通道中的缓冲区大小。如果容量是零或者缺省，则通道无缓冲并且仅当接收器和发送器都准备好时，才会成功。
+若有缓冲区，则会在发送时未满，接收时未空，才会无阻塞的通讯成功。
+一个 \lstinline|nil| 通道永远不会处于准备通讯状态。
+
+通道可以使用内置函数 \lstinline|close| 关闭。
+接收运算符的多值赋值形式可以用来报告，接受的值是否在通道关闭之前发送。
+
+单通道可能会被用在发送语句，接收操作，和被任意数量的无跟多的同步操作的 goroutinges 调用 \lstinline|cap| 和 \lstinline|len| 内置函数。
+通道的表现形式为先进先出的队列。
+比如一个 goroutine 向一个通道发送值，而第二个 goroutine 用于接收值，那么这些值会按照发送的顺序接收。
+
+
+
+
