@@ -1,6 +1,6 @@
 % 需要 litemize 的统一样式
 % 需要一个 BNF 的代码语法格式
-\usepackage{textcomp, listings, xcolor-material,enumitem}
+\usepackage{textcomp, listings, xcolor-material, enumitem, tabularx}
 \usepackage[hmargin=1.25in, vmargin=1in]{geometry}
 %\usepackage[T1]{fontenc}
 \usepackage{hyperref}
@@ -8,8 +8,9 @@
 \ctexset {
 	chapter/format += \raggedleft,
 	section/name = {\dag{ },},
-	section/number = \Roman{section},
+%	section/number = \Roman{section},
 	section/format += \raggedright,
+	subsection/name = {\ddag{},},
 %	subsection/number=\arabic{subsection},
 %	subsection/format += \centering,
 }
@@ -58,10 +59,10 @@
 	tabsize=4,
 	upquote=true,
 	showstringspaces=false,
-	numbers=none,
-	xleftmargin=4em,
-	xrightmargin=4em,
-	framexleftmargin=0em,
+	numbers=left,
+	xleftmargin=1.2\parindent,
+	xrightmargin=\parindent,
+	framexleftmargin=\parindent,
 %	texcl=true,
 	flexiblecolumns=true,
 	fontadjust=true,
@@ -86,7 +87,10 @@
 }
 
 \setlist{noitemsep}
-\setlist[1]{labelindent=\parindent}
+\setlist[1]{
+labelindent=\parindent,
+leftmargin=*
+}
 \setlist[description]{font=\ttfamily\bfseries}
 
 %\newenvironment*{code}[1][golang]
