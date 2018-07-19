@@ -169,6 +169,220 @@ type (
 )
 \end{lstlisting}
 
+\subsection{类型定义}
+类型定义会创建一个和给定类型拥有相同底层类型和操作，但截然不同的类型，并且将一个标识符绑定到新创建的类型。
+\begin{lstlisting}[style=golang]
+TypeDef = identifier Type .
+\end{lstlisting}
+新类型被称为定义的类型。该类型不同于其他任何类型，包括它的创建来源。
+\begin{lstlisting}[style=golang]
+type (
+	Point struct{ x, y float64 }  // Point and struct{ x, y float64 } are different types
+	polar Point                   // polar and Point denote different types
+)
+
+type TreeNode struct {
+	left, right *TreeNode
+	value *Comparable
+}
+
+type Block interface {
+	BlockSize() int
+	Encrypt(src, dst []byte)
+	Decrypt(src, dst []byte)
+}
+\end{lstlisting}
+定义的类型可能会有与其相关联的方法。
+不会集成任何与给定类型绑定方法，但是接口类型或聚合类型的元素的方法集不会更改：
+\begin{lstlisting}[style=golang]
+// A Mutex is a data type with two methods, Lock and Unlock.
+type Mutex struct         { /* Mutex fields */ }
+func (m *Mutex) Lock()    { /* Lock implementation */ }
+func (m *Mutex) Unlock()  { /* Unlock implementation */ }
+
+// NewMutex has the same composition as Mutex but its method set is empty.
+type NewMutex Mutex
+
+// The method set of PtrMutex's underlying type *Mutex remains unchanged,
+// but the method set of PtrMutex is empty.
+type PtrMutex *Mutex
+
+// The method set of *PrintableMutex contains the methods
+// Lock and Unlock bound to its embedded field Mutex.
+type PrintableMutex struct {
+	Mutex
+}
+
+// MyBlock is an interface type that has the same method set as Block.
+type MyBlock Block
+\end{lstlisting}
+
+类型定义可能会被用来定义不同的布尔，数值或字符串类型并且与其关联一些方法：
+\begin{lstlisting}[style=golang]
+type TimeZone int
+
+const (
+	EST TimeZone = -(5 + iota)
+	CST
+	MST
+	PST
+)
+
+func (tz TimeZone) String() string {
+	return fmt.Sprintf("GMT%+dh", tz)
+}
+\end{lstlisting}
+
+\section{变量声明}
+一个变量声明可以创建一个或多个变量，绑定到相应的标识符，并且给出每一个变量的类型和一个初始值。
+\begin{lstlisting}[style=EBNF]
+VarDecl     = "var" ( VarSpec | "(" { VarSpec ";" } ")" ) .
+VarSpec     = IdentifierList ( Type [ "=" ExpressionList ] | "=" ExpressionList ) .
+\end{lstlisting}
+
+\begin{lstlisting}[style=golang]
+var i int
+var U, V, W float64
+var k = 0
+var x, y float32 = -1, -2
+var (
+	i       int
+	u, v, s = 2.0, 3.0, "bar"
+)
+var re, im = complexSqrt(-1)
+var _, found = entries[name]  // map lookup; only interested in "found"
+\end{lstlisting}
+如果给出表达式列表，变量则会通过赋值规则使用表达式来初始化变量。
+否则，每一个变量会被初始化为 0 值。
+
+变量会优先使用给出的类型，否则使用初始化时所赋的值的类型。
+如果值为无类型常量，则会先转换为其默认类型；
+如果时一个无类型布尔值，则会先转换为 \lstinline|bool| 类型。
+预声明的值 \lstinline|nil| 必须使用显式的类型来初始化一个变量。
+\begin{lstlisting}[style=golang]
+var d = math.Sin(0.5)  // d is float64
+var i = 42             // i is int
+var t, ok = x.(T)      // t is T, ok is bool
+var n = nil            // illegal
+\end{lstlisting}
+
+受限制于实现：编译器可能会认为在函数体内声明一个从未被使用的变量是非法声明。
+
+\section{短变量声明}
+短变量声明使用以下格式：
+\begin{lstlisting}[style=EBNF]
+ShortVarDecl = IdentifierList ":=" ExpressionList .
+\end{lstlisting}
+这是使用无类型初始化表达式声明变量的简写：
+\begin{lstlisting}[style=EBNF]
+"var" IdentifierList = ExpressionList .
+\end{lstlisting}
+
+\begin{lstlisting}[style=golang]
+i, j := 0, 10
+f := func() int { return 7 }
+ch := make(chan int)
+r, w := os.Pipe(fd)  // os.Pipe() returns two values
+_, y, _ := coord(p)  // coord() returns three values; 
+					 // only interested in y coordinate
+\end{lstlisting}
+
+和常规变量声明不同，短变量声明可以使用相同的类型重新声明在之前同一块中声明过的变量（或者块为函数体的参数列表），并且在重声明时至少有一个非空白变量是新的。
+相应的，重声明只能出现在多变量的短声明中。
+重声明不会引入新的变量，他只会将新值赋值给原有的变量中。
+\begin{lstlisting}
+field1, offset := nextField(str, 0)
+field2, offset := nextField(str, offset)  // redeclares offset
+a, a := 1, 2	// illegal: double declaration of a 
+				// or no new variable if a was declared elsewhere
+\end{lstlisting}
+
+短变量声明只能出现在函数内，在一些环境中比如 \lstinline|"if", "for", "switch"| 语句的初始器中，可以用来声明局部临时变量。
+
+
+\section{函数声明}
+一个函数声明会将一个标识符（即函数名）绑定到函数上。
+\begin{lstlisting}[style=EBNF]
+FunctionDecl = "func" FunctionName Signature [ FunctionBody ] .
+FunctionName = identifier .
+FunctionBody = Block .
+\end{lstlisting}
+如果函数签字声明了结果参数，函数体的语句列表必须使用一个终止语句结尾。
+\begin{lstlisting}[style=golang]
+func IndexRune(s string, r rune) int {
+	for i, c := range s {
+		if c == r {
+			return i
+		}
+	}
+	// invalid: missing return statement
+}
+\end{lstlisting}
+
+一个函数声明可能会忽略函数体。这中声明为实现于 Go 以外的函数提供签字，比如汇编函数。
+\begin{lstlisting}[style=golang]
+func min(x int, y int) int {
+	if x < y {
+		return x
+	}
+	return y
+}
+
+func flushICache(begin, end uintptr)  // implemented externally
+\end{lstlisting} 
+
+\section{方法声明}
+一个方法是一个带有接收器的函数。
+一个方法声明会将一个标识符，即方法名，绑定到方法中，并使用接收器的基类型与方法进行关联。
+\begin{lstlisting}[style=golang]
+MethodDecl = "func" Receiver MethodName Signature [ FunctionBody ] .
+Receiver   = Parameters .
+\end{lstlisting}
+通过在方法名前使用额外的参数部分来指定接收器。
+该参数部分必须声明为一个非可变参数，该参数为接收器。
+参数类型必须是 \lstinline|T| 或 \lstinline|*T| 这两个形式中的一种，\lstinline|T| 为类型。
+由 \lstinline|T| 表示的类型为接收器基类型；他不能是一个指针或这接口类型，并且必须定义在和方法所属的同一个包内。
+方法被称为绑定到一个基类型并且方法名只在类型 \lstinline|T| 或 \lstinline|*T| 的选择器中可见。
+
+在方法签字中，非空白接收器标识符必须是独一无二的。
+如果方法体内没有引用接收器的值，则可以省略接收器标识符。
+同样的规则适用于函数和方法的参数。
+
+对于基类型，绑定到该基类型中的非空白方法名必须是独一无二的。
+如果基类型是一个结构体类型，非空白方法和字段名必须不同。
+
+给定类型 \lstinline|Point|，以下声明：
+\begin{lstlisting}[style=golang]
+func (p *Point) Length() float64 {
+	return math.Sqrt(p.x * p.x + p.y * p.y)
+}
+
+func (p *Point) Scale(factor float64) {
+	p.x *= factor
+	p.y *= factor
+}
+\end{lstlisting}
+会使用接收器类型 \lstinline|*Point| 将方法 \lstinline|Length| 和 \lstinline|Scale| 绑定到基类型 \lstinline|Point|。
+
+方法的类型为使用接收器作为第一个参数的函数的类型。比如，方法 \lstinline|Scale| 具有类型：
+\begin{lstlisting}[style=golang]
+func(p *Point, factor float64)
+\end{lstlisting}
+但是，用这种方式声明的函数并不是一个方法。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
