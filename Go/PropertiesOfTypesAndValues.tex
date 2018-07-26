@@ -76,22 +76,7 @@ func(x int, y float64) *[]string, func(int, float64) (result *[]string), and A5
 \item  \lstinline|T| 是一个浮点类型，并且 \lstinline|x| 可以无溢出的四舍五入到 \lstinline|T| 的精度范围内。使用 IEEE 754 的偶数约算规则进行四舍五入，但是 IEEE 的非负零简化成一个无符号零。注意常量值永远不可能是一个 IEEE 非负零，NAN，或者无穷。
 \item \lstinline|T| 是一个复数类型，\lstinline|x| 的组件 \lstinline|real(x)| 和 \lstinline|imag(x)| 可以由 \lstinline|T| 的组件类型（\lstinline|float32| 或 \lstinline|float64| 的值表示。
 \end{itemize}
-
-%\begin{tabbing}
-%\lstinline|x|\hspace{12em}		\=	\lstinline|T| \hspace{8em}\= \lstinline|x| 能够被 \lstinline|T| 的值表示的原因是 \\
-%`a'					\>	byte	\>	97 在字节类型的值得集合中 	\\
-%97          		\>	rune	\>	\lstinline|rune| 是 \lstinline|int32| 的别名，并且 97 在 32-bit 整型值得集合中	\\
-%"foo"         		\>	string	\>	``foo'' 在字符串值得集合中\\
-%1024            	\>	int16	\>	1024 在16-bit 整型值的集合中 \\
-%42.0            	\>	byte	\>	42 在无符号 8-bit 整型值得集合中 \\
-%1e10            	\>	uint64 	\>	10000000000 在 64-bit 无符号整型值的 \\ 
-%\>\>集合中 \\
-%2.718281828459045 	\>	float32	\>	2.718281828459045 四舍五入到 \\
-%					\>			\>	2.7182817 后再 float32 值得集合中。  \\
-%-1e-1000    		\>	float64	\>   -1e-1000 四舍五入到 IEEE -0.0 进一步简化到 0.0 \\
-%0i                 	\>	int		\>    0 是一个整型值	\\
-%(42 + 0i)          	\>	float32	\>   42.0 (虚部为 0) 在 float32 值得集合中 \\
-%\end{tabbing}
+\begin{table}
 \begin{tabularx}{\textwidth}{llX}
 \lstinline|x|		&\lstinline|T|&\lstinline|x| 能够被 \lstinline|T| 的值表示的原因是 \\
 \hline
@@ -119,7 +104,7 @@ func(x int, y float64) *[]string, func(int, float64) (result *[]string), and A5
 1e1000			&	float64			&	1e1000	在约数后溢出为 IEEE 的正无穷（+Inf）\\
 
 \end{tabularx}
-
+\end{table}
 
 
 

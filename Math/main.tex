@@ -1,0 +1,70 @@
+\documentclass{ctexart}
+\usepackage{textcomp, listings, xcolor-material, enumitem, tabularx,amsmath,multirow, latexsym, amssymb}
+\usepackage[noend]{algpseudocode}
+\usepackage{algorithm, algorithmicx}
+\usepackage[hmargin=1.25in, vmargin=1in]{geometry}
+
+\usepackage[amsmath,hyperref,amsthm]{ntheorem}
+%\usepackage[T1]{fontenc}
+\usepackage{hyperref}
+
+\setlist{noitemsep}
+\setlist[1]{
+labelindent=\parindent,
+leftmargin=*
+}
+\setlist[description]{font=\ttfamily\bfseries}
+
+\hypersetup{
+	colorlinks=true,
+	allcolors=MaterialCyan,
+	anchorcolor=MaterialCyan,
+	pdfauthor=sanfusu,
+	pdfkeywords=golang,
+}
+
+\ctexset {
+%	chapter/format += \raggedleft,
+	section/name = {\dag{},},
+%	section/number = \Roman{section},
+	section/format += \raggedright,
+	subsection/name = {\textperiodcentered{},},
+%	subsection/number=\arabic{subsection},
+%	subsection/format += \centering,
+}
+
+\newtheorem{Question}{题}[section]
+%\theoremstyle{definition} \newtheorem{Definition}{定义}[section]
+
+
+\title{数学证明笔记}
+\author{sanfusu $<$\href{mailto:sanfusu@foxmail.com}{sanfusu@foxmail.com}$>$}
+\date{\today}
+\begin{document}
+\maketitle
+
+\section{集合}
+\begin{Question}
+证明集合 $T=\{a_1, a_2, a_3, \ldots, a_n\}$ 共有 $2^n$ 个子集。
+\end{Question}
+\begin{proof}
+设集合 $T_1 \subset T$
+$\forall a_k \in T$，均有两种情况，$a_k \in T_1$ 或 $a_k \notin T_1$。可用 0 和 1 来编码这两个情况，并将 T 中的元素按下标排序，可形成一个二进制 bit 序列组成的数。该数的范围为 $[0, 2^{n-1}]$，即 $2^n$ 个数字（代表 $2^n$ 个子集）。
+\end{proof}
+
+\begin{Question}
+证明有理数集 $Q$ 是可列集。
+\end{Question}
+\begin{Question}
+证明：
+\begin{enumerate}
+\item 任意无限集比包含一个可列子集
+\item 设 $A$ 与 $B$ 都是可列子集，证明 $A \cup B$ 也是可列子集。
+\end{enumerate}
+\end{Question}
+%
+%\begin{Remark}
+%sf
+%\end{Remark}
+
+\end{document}

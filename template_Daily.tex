@@ -1,20 +1,11 @@
 % 需要 litemize 的统一样式
 % 需要一个 BNF 的代码语法格式
-\usepackage{textcomp, listings, xcolor-material, enumitem, tabularx}
+\usepackage{textcomp, listings, xcolor-material, enumitem, tabularx,amsmath,multirow, latexsym, amssymb}
+\usepackage[noend]{algpseudocode}
+\usepackage{algorithm, algorithmicx}
 \usepackage[hmargin=1.25in, vmargin=1in]{geometry}
 %\usepackage[T1]{fontenc}
 \usepackage{hyperref}
-
-\ctexset {
-	chapter/format += \raggedleft,
-	section/name = {\dag{ },},
-%	section/number = \Roman{section},
-	section/format += \raggedright,
-	subsection/name = {\ddag{},},
-%	subsection/number=\arabic{subsection},
-%	subsection/format += \centering,
-}
-
 \hypersetup{
 	colorlinks,% 
 }
@@ -96,7 +87,7 @@ leftmargin=*
 %\newenvironment*{code}[1][golang]
 %{\begin{lstlisting}[style=#1]}
 %{\end{lstlisting}}
-\newcommand{\hdots}{…}
+% \renewcommand{\ldots}{…}
 
 \hypersetup{
 	colorlinks=true,
@@ -105,5 +96,5 @@ leftmargin=*
 	pdfauthor=sanfusu,
 	pdfkeywords=golang,
 }
-
+\newcommand{\code}{\lstinline}
 
