@@ -98,3 +98,10 @@ leftmargin=*
 }
 \newcommand{\code}{\lstinline}
 
+\lstnewenvironment{golang}[1][left]{
+\lstset{language=golang, style=golang, numbers=#1}
+}{}
+
+\lstnewenvironment{EBNF}[1][left]{
+\lstset{language=EBNF, style=EBNF, numbers=#1}
+}{}

@@ -1,0 +1,746 @@
+% !TeX root = Main.tex
+\chapter{语句}
+语句控制着执行。
+\begin{lstlisting}[language=EBNF, style=EBNF]
+Statement =
+	Declaration | LabeledStmt | SimpleStmt |
+	GoStmt | ReturnStmt | BreakStmt | ContinueStmt | GotoStmt |
+	FallthroughStmt | Block | IfStmt | SwitchStmt | SelectStmt | ForStmt |
+	DeferStmt .
+
+SimpleStmt = EmptyStmt | ExpressionStmt | SendStmt | IncDecStmt | Assignment | ShortVarDecl .
+\end{lstlisting}
+
+\section{终止语句}
+一个终止语句可以阻止词法上同一块中出现在该语句之后的所有语句执行。
+下列语句是终止语句：
+\begin{enumerate}
+\item 一个 ``return'' 或 ``goto'' 语句。
+\item 一个内置函数 \code|panic| 的调用。
+\item 一个一终止语句结束的语句列表的块。
+\item 一个 ``if'' 语句，其中：
+	\begin{itemize}
+	\item 具有 ``else'' 分支，且
+	\item 两个分支都是终止语句。
+	\end{itemize}
+\item 一个 ``for'' 语句，其中：
+	\begin{itemize}
+	\item 没有涉及 ``for'' 语句的 ``break'' 语句，且
+	\item 缺省循环条件。
+	\end{itemize}
+\item 一个  ``switch'' 语句，其中：
+	\begin{itemize}
+	\item 没有涉及该 ``switch'' 语句的 ``break'' 语句。
+	\item 有 default case，且
+	\item 每一个 case（包括默认 case） 中的语句列表 都已终止语句结束，或者具有 ``fallthrough'' 标签。
+	\end{itemize}
+\item 一个 ``select'' 语句，其中
+	\begin{itemize}
+	\item 没有涉及该 ``select'' 语句的 ``break'' 语句，且
+	\item 每一个 case 中的语句列表，包括 default 在内，一终止语句结束。
+	\end{itemize}
+\item 一个标注了一个终止语句的标签语句。
+\end{enumerate}
+所有其他语句不为终止。
+
+如果语句列表非空，且最后一个非空语句是终止语句，则该语句列表以终止语句结束。
+
+\section{空语句}
+空语句不做任何事。
+\begin{lstlisting}[style=EBNF, language=EBNF]
+EmptyStmt = .
+\end{lstlisting}
+
+\section{标签语句}
+一个标签语句可以是 \code|goto| 、\code|break| 或 \code|continue| 语句的目标。
+\begin{lstlisting}[style=EBNF, language=EBNF]
+LabeledStmt = Label ":" Statement .
+Label       = identifier .
+\end{lstlisting}
+
+\begin{lstlisting}[language=golang, style=golang]
+Error: log.Panic("error encountered")
+\end{lstlisting}
+
+\section{表达式语句}
+除了特定的内置函数外，函数和方法调用以及接收操作可以出现在语句上下文中。这种语句可以使用圆括弧包含。
+\begin{lstlisting}[style=EBNF, language=EBNF]
+ExpressionStmt = Expression .
+\end{lstlisting}
+
+下列内置函数不允许出现在语句上下文中。
+\begin{lstlisting}[style=golang, language=golang]
+append cap complex imag len make new real
+unsafe.Alignof unsafe.Offsetof unsafe.Sizeof
+\end{lstlisting}
+\begin{lstlisting}[style=golang, language=golang]
+h(x+y)
+f.Close()
+<-ch
+(<-ch)
+len("foo")  // illegal if len is the built-in function
+\end{lstlisting}
+
+\section{发送语句}
+一个发送语句会在通道上发送一个值。
+通道表达式必须是一个通道类型，通道方向必须允许发送操作，被发送的值的类型必须可赋值给通道的元素类型。
+\begin{EBNF}
+SendStmt = Channel "<-" Expression .
+Channel  = Expression .
+\end{EBNF}
+
+\begin{lstlisting}[style=golang, language=golang]
+ch <- 3  // send value 3 to channel ch
+\end{lstlisting}
+
+\section{自增自减语句}
+``++'' 和 ``--'' 语句会对其操作数自增或自减一个无类型常量 1。
+和赋值一样，操作数必须可寻址或是一个映射索引表达式。
+\begin{EBNF}
+IncDecStmt = Expression ( "++" | "--" ) .
+\end{EBNF}
+下列赋值语句在语义上相等：
+\begin{table}[h]
+\centering
+\begin{tabular}{ll}
+IncDec statement  &  Assignment \\ \hline
+\code|x++|            &    \code| x += 1| \\
+\code|x-- |            &   \code| x -= 1| \\
+\end{tabular}
+\end{table}
+
+
+\section{赋值}
+\begin{EBNF}
+Assignment = ExpressionList assign_op ExpressionList .
+
+assign_op = [ add_op | mul_op ] "=" .
+\end{EBNF}
+每一个左侧操作数都必须可寻址、映射索引表达式、或者空白标识符（只用于 \code|=| 赋值）。
+操作数可以使用圆括弧包含。
+\begin{golang}
+x = 1
+*p = f()
+a[i] = 23
+(k) = <-ch  // same as: k = <-ch
+\end{golang}
+
+一个赋值运算 \code|x op= y|，其中 op 为一个二元算术运算符，等价于 \code|x = x op (y)|，但是 \code|x| 只计算一次。
+\code|op=| 构造是一个单一记号。
+在赋值运算中，左右侧表达式列表必须只含有单值表达式，且左侧表达式不能是空白标识符。
+\begin{golang}
+a[i] <<= 2
+i &^= 1<<n
+\end{golang}
+
+一个元组赋值可以多值运算的结果独立的赋值给变量列表。
+有两种赋值形式。
+第一种，右手侧是单个多值表达式，如函数调用，通道或映射运算，或类型断言。
+左侧操作数的数量必须匹配值的数量。比如，如果 \code|f| 是一返回两个值的函数，
+\begin{golang}
+x, y = f()
+\end{golang}
+将第一个值赋值给 \code|x| 并将第二个值赋值给 \code|y|。
+在第二中形式中，操作数的数量必须等于右侧表达式的数量，每一个表达式必须是一个单值表达式，并且右侧第 n 个表达式会赋值给左侧的第 n 个操作数：
+\begin{golang}
+one, two, three = '一', '二', '三'
+\end{golang}
+
+空白标识符提供一种忽视赋值语句中右侧值的方式：
+\begin{golang}
+_ = x       // evaluate x but ignore it
+x, _ = f()  // evaluate f() but ignore second result value
+\end{golang}
+
+赋值过程有两个阶段。
+首先，左侧表达式中的索引表达式和指针反引用（包括选择器中隐式的指针反引用）的操作数与右侧表达式会按照正常顺序计算。
+其次，赋值会按照从左向右的顺序展开。
+\begin{golang}
+a, b = b, a  // exchange a and b
+
+x := []int{1, 2, 3}
+i := 0
+i, x[i] = 1, 2  // set i = 1, x[0] = 2
+
+i = 0
+x[i], i = 2, 1  // set x[0] = 2, i = 1
+
+x[0], x[0] = 1, 2  // set x[0] = 1, then x[0] = 2 (so x[0] == 2 at end)
+
+x[1], x[3] = 4, 5  // set x[1] = 4, then panic setting x[3] = 5.
+
+type Point struct { x, y int }
+var p *Point
+x[2], p.x = 6, 7  // set x[2] = 6, then panic setting p.x = 7
+
+i = 2
+x = []int{3, 5, 7}
+for i, x[i] = range x {  // set i, x[2] = 0, x[0]
+	break
+}
+// after this loop, i == 0 and x == []int{3, 5, 3}
+\end{golang}
+
+赋值中，每一个值必须能够被赋值给其要被赋予操作数的类型，有如下特列：
+\begin{enumerate}
+\item 任何有类型的值可以被赋值给空白标识符。
+\item 如果一个无类型常量被赋值给一个接口类型变量或者空白标识符，常量会先转换为他的默认类型。
+\item 如果无类型布尔值被赋值给一个接口类型变量或空白标识符符，会先转换为 \code|bool| 类型。
+\end{enumerate}
+
+\section{If 语句}
+``If'' 语句通过一个布尔表达式的值来指明两个分支的条件执行。
+如果表达式计算为 true，执行 ``if'' 分支，否则，执行 ``else'' 分支（如果有的话）。
+\begin{EBNF}
+IfStmt = "if" [ SimpleStmt ";" ] Expression Block [ "else" ( IfStmt | Block ) ] .
+\end{EBNF}
+
+\begin{golang}
+if x > max {
+	x = max
+}
+\end{golang}
+
+表达式前可以有一个简单语句，会在表达式执行前计算。
+\begin{golang}
+if x := f(); x < y {
+	return x
+} else if x > z {
+	return z
+} else {
+	return y
+}
+\end{golang}
+
+\section{Switch 语句}
+``switch'' 语句提供多路执行。一个表达式或类型说明符会和 ``switch'' 中的``cases'' 进行比较，从而决定执行哪一个分支。
+\begin{EBNF}
+SwitchStmt = ExprSwitchStmt | TypeSwitchStmt .
+\end{EBNF}
+有两种形式的 switch  语句：表达式 switch 和 类型 switch。
+在表达式 switch 中，case 包含和 switch 表达式的值进行比较的表达式。
+在类型 switch 中，case 包含和 swtich 表达式中特别标注的类型进行比较的类型。
+swithc 语句中的 swtich 表达式只会计算一次。
+
+\subsection{表达式 switch}
+在表达式 switch 中，switch 表达式会被计算，且 case 表达式不必为常量，按照从左向右，自上而下的顺序计算；
+第一个等 switch 表达式的 case 表达式触发与 case 表达式相关联的执行；其余 case 会被跳过。
+如果没有匹配的 case，并且有 default case，则会执行  defalut case。
+至多有一个 default case，并可以出现在 ``switch'' 语句中的任何位置。
+一个缺失的 switch 表达式等价于布尔值 \code|true|。
+\begin{EBNF}
+ExprSwitchStmt = "switch" [ SimpleStmt ";" ] [ Expression ] "{" { ExprCaseClause } "}" .
+ExprCaseClause = ExprSwitchCase ":" StatementList .
+ExprSwitchCase = "case" ExpressionList | "default" .
+\end{EBNF}
+
+如果 switch 表达式计算为一个无类型常量，则会先转换为其默认类型；
+如果是一个无类型布尔值，则会先转换为 \code|bool| 类型。
+预声明无类型值 \code|nil| 无法在 switch 表达式中使用。
+
+如果一个 case 表达式是无类型的，会先转换为 switch 表达式的类型。
+对于每一个 case 表达式 \code|x| （可以是转换后的） 和 switch 表达式的值 \code|t|，\code|x == t| 必须是一个有效比较。
+
+换一句话说，switch 表达式被当作无显式类型的声明并初始化变量 \code|t|；
+\code|t| 的值会和每一个 case 表达式进行等价性测试。
+
+在一个 case 或 default 子部中，最后一个非空语句可以是一个 ``fallthrough'' 语句，来表示控制流会进入下一个子部的第一个语句。
+否则，控制流会进入 ``swtich'' 语句的结尾处。
+一个 ``fallthrough'' 语句可以会出现在除表达式 swtich 最后一个子部的所有子部的最后一个语句。
+
+switch 表达式前面可以有一个简单语句，会在表达式计算之前执行。
+\begin{golang}
+switch tag {
+default: s3()
+case 0, 1, 2, 3: s1()
+case 4, 5, 6, 7: s2()
+}
+
+switch x := f(); {  // missing switch expression means "true"
+case x < 0: return -x
+default: return x
+}
+
+switch {
+case x < y: f1()
+case x < z: f2()
+case x == 4: f3()
+}
+\end{golang}
+
+受限于实现：一个编译器可能不允许多个表达式计算为相同的常量。
+比如，当前编译器不允许重复的整数、浮点、或字符串常量出现在 case 表达式中。
+
+\subsection{类型 switch}
+一个类型 switch 除了比较类型而非值外，和表达式 switch 相似。
+类型 switch 由一个具有类型断言的特殊 switch 表达式标记，并使用保留字 \code|type| 而非实际类型：
+\begin{golang}
+switch x.(type) {
+// cases
+}
+\end{golang}
+case 根据表达式 \code|x| 的动态类型来匹配实际的类型 \code|T|。
+和类型断言一样，\code|x| 必须是一个接口类型，并且列在 case 中的每一个接口类型 \code|T| 必须实现了 \code|x| 的类型。
+列在类型 switch 中的 case 里的类型必须全部不同。
+\begin{EBNF}
+TypeSwitchStmt  = "switch" [ SimpleStmt ";" ] TypeSwitchGuard "{" { TypeCaseClause } "}" .
+TypeSwitchGuard = [ identifier ":=" ] PrimaryExpr "." "(" "type" ")" .
+TypeCaseClause  = TypeSwitchCase ":" StatementList .
+TypeSwitchCase  = "case" TypeList | "default" .
+TypeList        = Type { "," Type } .
+\end{EBNF}
+
+TypeSwitchGuard 可以包含一个短变量声明。
+当使用这种形式的时候，变量声明在每一个子部的隐式块的 TypeSwitchCase 末尾。
+在只有一个类型的 case 子部，变量具有该类型；否则，变量具有 TypeSwitchGuard 中的表达式类型。
+
+除了类型，一个 case 可以使用预声明标识符 \code|nil|；当 TypeSwitchGuard 是一个 \code|nil| 接口值时会选择该 case。
+至多有一个 \code|nil| case。
+
+给定一个类型为 \code|interface{}| 的表达式 \code|x|，下列类型 switch：
+\begin{golang}
+switch i := x.(type) {
+case nil:
+	printString("x is nil")                // type of i is type of x (interface{})
+case int:
+	printInt(i)                            // type of i is int
+case float64:
+	printFloat64(i)                        // type of i is float64
+case func(int) float64:
+	printFunction(i)                       // type of i is func(int) float64
+case bool, string:
+	printString("type is bool or string")  // type of i is type of x (interface{})
+default:
+	printString("don't know the type")     // type of i is type of x (interface{})
+}
+\end{golang}
+可以重写为：
+\begin{golang}
+v := x  // x is evaluated exactly once
+if v == nil {
+	i := v                                 // type of i is type of x (interface{})
+	printString("x is nil")
+} else if i, isInt := v.(int); isInt {
+	printInt(i)                            // type of i is int
+} else if i, isFloat64 := v.(float64); isFloat64 {
+	printFloat64(i)                        // type of i is float64
+} else if i, isFunc := v.(func(int) float64); isFunc {
+	printFunction(i)                       // type of i is func(int) float64
+} else {
+	_, isBool := v.(bool)
+	_, isString := v.(string)
+	if isBool || isString {
+		i := v                         // type of i is type of x (interface{})
+		printString("type is bool or string")
+	} else {
+		i := v                         // type of i is type of x (interface{})
+		printString("don't know the type")
+	}
+}
+\end{golang}
+
+类型 switch guard 前面可以放上一个简单语句，该语句会在 guard 计算之前执行。
+
+``fallthrough'' 语句不允许出现在类型 switch 中。
+
+\section{For 语句}
+一个 ``for'' 语句表示一个块的重复执行。
+有三种形式：迭代可以被一个单一条件、一个 ``for'' 子部、或一个 ``range'' 子部控制。
+\begin{EBNF}
+ForStmt = "for" [ Condition | ForClause | RangeClause ] Block .
+Condition = Expression .
+\end{EBNF}
+
+\subsection{具有但条件的 for 语句}
+在这种最简单的形式中，一个 ``for'' 语句表示只要布尔条件计算为真，就会重复块执行。
+条件会在每次迭代之前执行。
+如果条件缺省，等价于布尔值 \code|true|。
+\begin{golang}
+for a < b {
+	a *= 2
+}
+\end{golang}
+
+\subsection{带有 for 子部的 For 语句}
+带有 ForClause 的 ``for'' 语句也被其条件控制，但会有额外的初始和后置语句，比如一个赋值，一个自增或自减语句。
+初始语句可以是一个短变量声明，但是后置语句不可以。
+初始语句中声明的变量可以在每次迭代中重复使用。
+\begin{EBNF}
+ForClause = [ InitStmt ] ";" [ Condition ] ";" [ PostStmt ] .
+InitStmt = SimpleStmt .
+PostStmt = SimpleStmt .
+\end{EBNF}
+
+
+
+
+\begin{golang}
+for i := 0; i < 10; i++ {
+	f(i)
+}
+\end{golang}
+
+如果非空，初始语句会在第一迭代计算条件之前执行一次；
+后置语句则会在每一次块执行（且只要块被执行）后执行。
+ForClause 的任何元素都可以为空，但是除非只有一个条件时，分号是必须的。
+如果条件缺省，则等价于布尔值 \code|true|
+\begin{lstlisting}
+for cond { S() }    is the same as    for ; cond ; { S() }
+for      { S() }    is the same as    for true     { S() }
+\end{lstlisting}
+
+\subsection{带有 range 子部的语句}
+一个带有 ``range'' 子部的 ``for'' 语句会迭代数组、切片、字符串、或映射的所有条目或在通道中接收的所有值。
+每一个条目会将迭代值被赋值给迭代变量（如果有的话）。
+\begin{EBNF}
+RangeClause = [ ExpressionList "=" | IdentifierList ":=" ] "range" Expression .
+\end{EBNF}
+
+``range'' 子部右侧表达式被称为 range 表达式，可以是一个数组、数组指针、切片、字符串、映射、或者允许接收操作的通道。
+如果作为操作数出现在赋值左侧，则必须是可寻址的，或为映射索引表达式；他们表示迭代变量。
+如果 range 表达式是要给通道，则至多允许一个迭代变量，否则可以多达两个。
+如果最后一个迭代变量是一个空白标识符，range 子部等价于无该标识符的相同子部。
+
+range 表达式 \code|x| 只会在循环开始前计算一次，有一个特例：如果至多有一个迭代变量并且 \code|len(x)| 是一个常量，则不会计算range表达式。
+
+左侧的函数调用在每次迭代中都会计算一次。
+在每一次迭代中，如果提供了相应的迭代变量，迭代值会按照如下方式提供：
+\begin{lstlisting}
+Range expression                          1st value          2nd value
+
+array or slice  a  [n]E, *[n]E, or []E    index    i  int    a[i]       E
+string          s  string type            index    i  int    see below  rune
+map             m  map[K]V                key      k  K      m[k]       V
+channel         c  chan E, <-chan E       element  e  E
+\end{lstlisting}
+
+\begin{enumerate}
+\item 对于数组、数组指针、切片值 \code|a|，索引迭代值会按照递增顺序从零提供。
+如果最多出现了一个迭代变量，range 循环会提供从 0 到 \code|len(a) - 1| 的迭代值，并且不会索引到数组或切片自身。
+对于 \code|nil| 切片，迭代次数为 0。
+\item 对于字符串值，``range'' 子部会从字节索引 0 处迭代字符串中的 Unicode 编码点。
+在连续的迭代中，索引值必须是字符串中连续 UTF-8 编码点的第一个字节的索引，而第二个 \code|rune| 类型的值将会是相应的编码点。
+如果迭代中遇到一个无效的 UTF-8 序列，第二个值将为 \code|0xFFFD|（Unicode 替换字符），并且下一个迭代会提前字符串一个字节。
+\item 映射的迭代顺序是未指定的，并且不能保证下一次迭代时顺序相同。
+如果一个映射条目尚未获取，则将会在迭代中移除并且不提供相应的迭代值。
+如果在迭代中创建了一个映射条目，该条目可能会在迭代中提供也可能会被跳过。
+这种选择会在不同的迭代中有所不同。
+如果映射是 \code|nil|，迭代次数为 0。
+\item 对于通道，提供的迭代值为被发送到通道中的连续值，直到通道被关闭。
+如果通道是 \code|nil|，range 表达式会永远的阻塞。
+\end{enumerate}
+
+和赋值语句一样会将迭代值赋值给相应的迭代变量。
+
+由 ``range'' 子部声明的迭代变量可以使用短变量声明形式（\code|:=|）。
+在这种情况下，他们的类型会被设置为相应迭代值的类型，并且他们的作用域为 ``for'' 语句块；并可以在每次迭代中重复使用。
+如果迭代变量声明在 ``for'' 语句外面，执行完成后，这些变量的值将变成最后一次迭代的值。
+\begin{golang}
+var testdata *struct {
+	a *[7]int
+}
+for i, _ := range testdata.a {
+	// testdata.a is never evaluated; len(testdata.a) is constant
+	// i ranges from 0 to 6
+	f(i)
+}
+
+var a [10]string
+for i, s := range a {
+	// type of i is int
+	// type of s is string
+	// s == a[i]
+	g(i, s)
+}
+
+var key string
+var val interface {}  // element type of m is assignable to val
+m := map[string]int{"mon":0, "tue":1, "wed":2, "thu":3, "fri":4, "sat":5, "sun":6}
+for key, val = range m {
+	h(key, val)
+}
+// key == last map key encountered in iteration
+// val == map[key]
+
+var ch chan Work = producer()
+for w := range ch {
+	doWork(w)
+}
+
+// empty a channel
+for range ch {}
+\end{golang}
+
+\section{Go 语句}
+一个 ``go'' 语句会作为独立的并行线程控制（或 goroutine）在同一个地址空间中执行一个函数调用。
+\begin{EBNF}
+GoStmt = "go" Expression .
+\end{EBNF}
+
+其中表达式必须是一个函数或方法调用；不能被圆括弧包含。
+调用内置函数的限制和表达式语句一样。
+
+函数值和参数会和 goroutine 调用一样计算，但是不想常规调用，程序执行不会等待被调函数完成。
+而是，使用新的 goroutine 独立执行。
+当函数终止时，其 goroutine 也会终止。
+如果函数具有任何返回值，则会在函数完成时舍弃。
+\begin{golang}
+go Server()
+go func(ch chan<- bool) { for { sleep(10); ch <- true }} (c)
+\end{golang}
+
+\section{选择语句}
+一个 ``select'' 语句会选择一组可能会处理的 send 或 receive 操作。
+类似与 ``switch'' 语句，但是这一次所有的 case 都是通讯操作。
+\begin{EBNF}
+SelectStmt = "select" "{" { CommClause } "}" .
+CommClause = CommCase ":" StatementList .
+CommCase   = "case" ( SendStmt | RecvStmt ) | "default" .
+RecvStmt   = [ ExpressionList "=" | IdentifierList ":=" ] RecvExpr .
+RecvExpr   = Expression .
+\end{EBNF}
+
+一个带有 RecvStmt 的 case 会将 RecvExpr 的结果赋值给一个或两个变量，这些变量可以使用短变量声明来声明。
+RecvExpr 必须使用接收操作（可以使用圆括弧包含）。
+至多有一个默认 case，并且可以出现在 case 列表中的任何位置。
+
+执行一个 ``select'' 语句会有以下几个步骤：
+\begin{enumerate}
+\item 
+对于语句中的所有 case，一进入 ``select'' 语句，接收操作的通道操作数和通道以及发送语句的右手侧表达式就会按照源顺序计算一次。
+结果为接收或发送的通道的集合，以及相应的发送值。
+不管通讯操作是否被选择处理，计算时的任何副作用都会发送。
+RecvStmt 左手侧的表达式具有短变量声明或者尚未计算的赋值。
+\item 
+如果一个或多个通讯可以被处理，则会通过伪随机算法选择其中的一个。
+否则，如果有 default case，则会选则该 case。
+如果没有 default case，``select'' 语句会一直阻塞到至少有一个通讯可以被处理。
+\item 
+除非被选择的 case 是 default case，则会执行各自的通讯操作。
+\item 
+如果被选择的 case 是一个带有短变量声明或赋值的 RecvStmt，左手侧表达式会被计算，或者接收值会被赋值。
+\item 
+执行被选择的 case 的语句列表。
+\end{enumerate}
+
+由于 \code|nil| 通道的通讯从不被处理，一个只有 \code|nil| 通道并且没有 default  case 的选择会一直阻塞。
+\begin{golang}
+var a []int
+var c, c1, c2, c3, c4 chan int
+var i1, i2 int
+select {
+case i1 = <-c1:
+	print("received ", i1, " from c1\n")
+case c2 <- i2:
+	print("sent ", i2, " to c2\n")
+case i3, ok := (<-c3):  // same as: i3, ok := <-c3
+	if ok {
+		print("received ", i3, " from c3\n")
+	} else {
+		print("c3 is closed\n")
+	}
+case a[f()] = <-c4:
+	// same as:
+	// case t := <-c4
+	//	a[f()] = t
+default:
+	print("no communication\n")
+}
+
+for {  // send random sequence of bits to c
+	select {
+	case c <- 0:  // note: no statement, no fallthrough, no folding of cases
+	case c <- 1:
+	}
+}
+
+select {}  // block forever
+\end{golang}
+
+
+\section{返回语句}
+函数 \code|F| 的返回语句会终止 \code|F| 的执行，并且提供一个或多个可选的结果值。
+任何被 \code|F|  推迟的函数会在 \code|F| 返回到调用者之前执行。
+\begin{EBNF}
+ReturnStmt = "return" [ ExpressionList ] .
+\end{EBNF}
+
+在一个无结果类型的函数中，返回语句不能指定任何结果值。
+\begin{golang}
+func noResult() {
+	return
+}
+\end{golang}
+
+有三种方式从一个带结果类型的函数中返回值：
+\begin{enumerate}
+\item 
+返回值可以显式的列在返回语句中。每一个表达式必须是单值表达式并且可以赋值给相应的函数结果类型中的元素。
+\begin{golang}
+func simpleF() int {
+	return 2
+}
+
+func complexF1() (re float64, im float64) {
+	return -7.0, -4.0
+}
+\end{golang}
+\item 
+返回语句中的表达式列表可以是一个多值函数调用。其效果过相当于每一个从函数中返回的值被赋值给一个具有相应类型的临时变量，返回语句后面的这些变量适用于前一种情况的规则。
+\begin{golang}
+func complexF2() (re float64, im float64) {
+	return complexF1()
+}
+\end{golang}
+\item 
+如果函数的结果类型为其结果参数指定了名字，则表达式列表可以为空。
+结果参数和普通的本地变量一样，并且函数可以在必要的时候将值赋值给他们。
+最终的返回语句将会返回这些变量的值。
+\begin{golang}
+func complexF3() (re float64, im float64) {
+	re = 7.0
+	im = 4.0
+	return
+}
+
+func (devnull) Write(p []byte) (n int, _ error) {
+	n = len(p)
+	return
+}
+\end{golang}
+\end{enumerate}
+
+不管如何声明，所有的结果值都会在进入函数时初始化为相应类型的 0 值。
+一个返回语句会在任何延迟函数执行之前指定结果参数集。
+
+实现限制：如果在返回语句范围内，作为结果参数，不同的条目（常量，类型，变量）具有相同的名字，编译器可能会不允许返回语句使用空表达式列表。
+\begin{golang}
+func f(n int) (res int, err error) {
+	if _, err := f(n-1); err != nil {
+		return  // invalid return statement: err is shadowed
+	}
+	return
+\end{golang}
+
+\section{Break 语句}
+一个 ``break'' 语句会终止相同函数内 ``for''，``switch''，``select'' 语句的执行。
+\begin{EBNF}
+BreakStmt = "break" [ Label ] .
+\end{EBNF}
+
+如果有标签，则必须被 ``for''，``switch''，或 ``select'' 语句包含，并且将成为执行终止处。
+\begin{golang}
+OuterLoop:
+	for i = 0; i < n; i++ {
+		for j = 0; j < m; j++ {
+			switch a[i][j] {
+			case nil:
+				state = Error
+				break OuterLoop
+			case item:
+				state = Found
+				break OuterLoop
+			}
+		}
+	}
+\end{golang}
+
+\section{Continue 语句}
+一个 ``continue'' 语句会从（for 语句的）后置语句开始最内层 ``for'' 循环的下一次迭代。
+``for'' 循环必须在相同的函数内。
+\begin{EBNF}
+ContinueStmt = "continue" [ Label ] .
+\end{EBNF}
+如果有标签，则必需是一个闭合的 ``for'' 语句，也就是说该标签为 ``for'' 语句的执行开始处。
+\begin{golang}
+RowLoop:
+	for y, row := range rows {
+		for x, data := range row {
+			if data == endOfRow {
+				continue RowLoop
+			}
+			row[x] = data + bias(x, y)
+		}
+	}
+\end{golang}
+
+
+\section{Goto 语句}
+一个 ``goto'' 语句会将控制移交给相同函数内相应的标签语句。
+\begin{EBNF}
+GotoStmt = "goto" Label .
+\end{EBNF}
+
+\begin{golang}
+goto Error
+\end{golang}
+
+``goto'' 语句的执行不能在该点范围内引入任何变量。比如，该示例中：
+\begin{golang}
+	goto L  // BAD
+	v := 3
+L:
+\end{golang}
+会因为标签 \code|L| 跳过了 \code|V| 的创建而发生错误。
+
+块外层的 ``goto'' 语句无法跳入该块内的标签，比如，该示例中：
+\begin{golang}
+if n%2 == 1 {
+	goto L1
+}
+for n > 0 {
+	f()
+	n--
+L1:
+	f()
+	n--
+}
+\end{golang}
+会因为 \code|L1| 位于 ``for'' 语句块中，而 ``goto'' 不是，从而发送错误。
+
+\section{Fallthrough 语句}
+一个 ``fallthrough'' 语句会将控制转移给 ``switch'' 语句中的下一个 case 子块。
+该语句只能用作这种子块的最后一个非空表达式。
+\begin{EBNF}
+FallthroughStmt = "fallthrough" .
+\end{EBNF}
+
+\section{Defer 语句}
+一个 ``defer'' 语句将一个函数推迟到外围函数返回时执行，这种执行不管外围函数是执行了返回语句、还是到达函数体的末尾、或者相应的 goroutine 崩坏。
+\begin{EBNF}
+DeferStmt = "defer" Expression .
+\end{EBNF}
+
+表达式必须是一个函数或方法调用，无法被圆括弧包含。
+内置函数的调用具有表达式语句一样的限制。
+
+每次执行 ``defer'' 语句，函数值和参数会和通常一样执行，并重新保持，但是并不调用实际函数。
+推迟的函数会在外层函数返回之前按照与推迟顺序相反的顺序立即调用。
+如果推迟的函数计算为 \code|nil|，在调用该函数时会造成崩坏，而不是在执行``defer'' 语句时。
+
+比如，如果推迟的函数是一个函数字面量并且外层函数具有在该字面量范围内的命名的结果参数，推迟的函数可以在命名结果参数返回之前修该他们。
+如果推迟的函数具有任何返回值，则会在函数完成时舍弃他们。（See also 处理崩坏章节）。
+\begin{golang}
+lock(l)
+defer unlock(l)  // unlocking happens before surrounding function returns
+
+// prints 3 2 1 0 before surrounding function returns
+for i := 0; i <= 3; i++ {
+	defer fmt.Print(i)
+}
+
+// f returns 1
+func f() (result int) {
+	defer func() {
+		result++
+	}()
+	return 0
+}
+\end{golang}
+
+
+
+
+
+
+

@@ -1,0 +1,13 @@
+% !TeX root = Main.tex
+\chapter{错误}
+预声明类型 \code|error| 定义如下：
+\begin{golang}
+type error interface {
+	Error() string
+}
+\end{golang}
+这是一个常规的用来表示一个错误条件的接口，使用 \code|nil| 值来表示没有错误。
+比如，一个从文件中读取数据的函数可以定义为：
+\begin{golang}
+func Read(f *File, b []byte) (n int, err error)
+\end{golang}

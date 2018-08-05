@@ -1,0 +1,71 @@
+% !TeX root = Main.tex
+\chapter{系统考量}
+\section{包 unsafe}
+内置包 unsafe，为编译器所知，并通过导入路径 ``unsafe'' 来获取，
+提供了用于低级变成包括那些违反类型系统的操作。
+一个使用了 unsafe 的包必须手动的审查其类型安全性并且可能不可移植。
+该包提供了以下接口：
+\begin{golang}
+package unsafe
+
+type ArbitraryType int  // shorthand for an arbitrary Go type; it is not a real type
+type Pointer *ArbitraryType
+
+func Alignof(variable ArbitraryType) uintptr
+func Offsetof(selector ArbitraryType) uintptr
+func Sizeof(variable ArbitraryType) uintptr
+\end{golang}
+
+\code|Pointer| 是一个指针类型，但是 \code|Pointer| 值可能不能被反引用。
+任何指针或底层类型 \code|uintptr| 的值都可以被转换为底层类型 \code|Pointer| 的类型，反之亦然。
+\code|Pointer| 和 \code|uintptr| 之间的转换效果是由实现定义的。
+\begin{golang}
+var f float64
+bits = *(*uint64)(unsafe.Pointer(&f))
+
+type ptr unsafe.Pointer
+bits = *(*uint64)(ptr(&f))
+
+var p ptr = nil
+\end{golang}
+
+函数 \code|Alignof| 和 \code|Sizeof| 使用任何类型的表达式 \code|x| 作为参数，并返回假定的变量 \code|v|（就好像 \code|var v =x| 来声明的一样）的相应的对齐或尺寸。
+
+函数 \code|Offsetof| 的参数为一个选择器（可以使用圆括弧）\code|s.f|，表示由 \code|s| 或 \code|*s| 表示结构体的字段 \code|f|，返回该字段按字节相对于结构体地址的偏移。
+如果 \code|f| 是一个嵌入的字段，则必须是可以无需通过结构体字段的间接指针访问。对于具有字段 \code|f| 的结构体 \code|s|：
+\begin{golang}
+uintptr(unsafe.Pointer(&s)) + unsafe.Offsetof(s.f) == uintptr(unsafe.Pointer(&s.f))
+\end{golang}
+
+计算机架构可能会要求内存地址对齐；也就是说，一个变量的地址为一个因子的倍数，该因子为变量类型的对齐。
+函数 \code|Alignof| 需要一个参数，该参数为一个表示任何类型的变量的表达式,，并按字节返回该变量（类型）的对齐。
+对于一个变量 \code|x|：
+\begin{golang}
+uintptr(unsafe.Pointer(&x)) % unsafe.Alignof(x) == 0
+\end{golang}
+调用 \code|Alignof|，\code|Offsetof|，和 \code|Sizeof| 是 \code|uintptr| 类型的编译时常量表达式。
+
+\section{大小和对齐保证}
+对于数值类型，可以保证为下列大小：
+\begin{table}[H]
+\centering
+\begin{tabular}{ll}
+type                           &      size in bytes  \\ \hline
+
+byte, uint8, int8            &         1 \\
+uint16, int16                &         2  \\
+uint32, int32, float32            &    4 \\
+uint64, int64, float64, complex64   &  8 \\
+complex128                    &       16 \\
+\end{tabular}
+\end{table}
+
+可以保证下列最小对齐属性：
+\begin{enumerate}
+\item 对于任何类型的变量 \code|x|：\code|unsafe.Alignof(x)| 最少为 1。
+\item 对于结构体类型变量 \code|x|：\code|unsafe.Alignof(x)| 为 \code|x| 中每一个字段 \code|f| 的 \code|unsafe.Alignof(x.f)| 中最大的值，但至少为 1。
+\item 对于数组类型变量 \code|x|：\code|unsafe.Alignof(x)| 和数组元素类型变量的对齐一样。
+\end{enumerate}
+
+一个结构体或数组类型如果没有尺寸大于 0 的字段（或元素），则大小为 0。
+两个不同的 0 值变量在内存中可能具有相同的地址。
