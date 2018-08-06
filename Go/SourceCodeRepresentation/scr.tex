@@ -2,7 +2,7 @@
 
 \chapter{源码表示}
 原代码被编码成 \href{http://en.wikipedia.org/wiki/UTF-8}{UTF-8} 格式的 Unicode 文本。
-这些文本并不是正规化的，所以单个重音编码点与那些通过重音符合字母构成的相同字符并不一样，组合出来的字符被视为两个编码点。
+这些文本并不是正规化的，所以单个重音化的编码点与那些通过重音符和字母构成的相同字符并不一样，组合出来的字符被视为两个编码点。
 简单的来说，本文档将使用未加任何限制的术语 \emph{character（字符）} 来指示源文本中的 Unicode 编码点。
 
 区分每一个编码点，比如，大写字母和小写字母是不同的字符。
@@ -25,17 +25,17 @@ unicode_letter	=
 \end{lstlisting}
 在 \href{http://www.unicode.org/versions/Unicode8.0.0/}{Unicode 8.0 标准}中，
 第 4.5 节 ``General Category'' 中，定义了一组字符类别。
-Go 将字母分类 Lu，LI，Lt，Lm 或者 Lo 中的所有字符均作为 Unicode 字母，
+Go 将Lu，LI，Lt，Lm 或者 Lo 字母类别中的所有字符作为 Unicode 字母，
 并将 Number 类别中的 Nd 作为 Unicode 数字。
 
 \section{字母和数字}
 下划线字符 \_(U+005F) 被视为一个字母。
-\begin{lstlisting}[style=EBNF]
+\begin{EBNF}
 letter        = unicode_letter | "_" .@\label{letter}@
 decimal_digit = "0" … "9" .
 octal_digit   = "0" … "7" .
 hex_digit     = "0" … "9" | "A" … "F" | "a" … "f" .
-\end{lstlisting}
+\end{EBNF}
 
 
 
