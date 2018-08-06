@@ -1,17 +1,17 @@
 % !TeX root = ../Main.tex
 
 \section{字符串字面量}
-字符串字面量表示从相连的字符序列中所获取的字符串常量。
-字符串字面量有两种形式：原始字符串字面量和已翻译的字符串字面量。
+字符串字面量表示从相邻的字符序列中所获取的字符串常量。
+字符串字面量有两种形式：原始字符串字面量和解释型字符串字面量。
 
 原始字符串字面量是两个反撇号之间的字符序列，比如 \lstinline|`foo`|。除了反撇号自身，任何字符均可以出现在反撇号里。
 原始字符串字面量的值是由反撇号之间未翻译过（默认是 UTF-8 编码）的字符序列所组成的字符串；
 值得注意的是，反斜杠没有特殊意义，并且字符串可以包含换行。
 原始字符串字面量中的回车字符（\lstinline|'\r'|）会被舍弃。
 
-翻译过的字符串字面量为双引号之间的字符序列，比如 \lstinline|"bar"|。
+解释型字符串字面量为双引号之间的字符序列，比如 \lstinline|"bar"|。
 除了双引号自身和换行之外任何字符都可以出现在双引号内。
-双引号之间的文本形成字面量的值，但其中的反斜杠转义会根据\rune{}字面量中的限制来解释（除了 \lstinline|\'| 非法，而 \lstinline|\"| 结果字符串中的合法之外）。
+双引号之间的文本形成字面量的值，但其中的反斜杠转义会根据\rune{}字面量中的限制来解释（除了 \lstinline|\'| 非法，而 \lstinline|\"| 合法之外）。
 三个八进制数字（\lstinline|\nnn| 和两个十六进制数转义表示结果字符串中的个体字节，其他所有的转义均表示个体字符的 UTF-8 编码（也可能是多字节）。
 因此字符串字面量里面的 \lstinline|\377| 和 \lstinline|\xFF| 表示值为 0xFF=255 的单字节，
 而 \"y, \lstinline|\u00FF|, \lstinline|\U000000FF | 和 \lstinline|\xc3\xbf| 表示 UTF-8 编码的字符 U+00FF 的两个字节 \lstinline|0xc3 0xbf|。
@@ -37,8 +37,8 @@ interpreted_string_lit = `"` { unicode_value | byte_value } `"` .
 \end{lstlisting}
 下面示例均表示相同的字符串：
 \begin{lstlisting}[style=golang]
-"日本語"							// UTF-8 input text
-`日本語`							// UTF-8 input text as a raw literal
+"日本語"								// UTF-8 input text
+`日本語`								// UTF-8 input text as a raw literal
 "\u65e5\u672c\u8a9e"                    // the explicit Unicode code points
 "\U000065e5\U0000672c\U00008a9e"        // the explicit Unicode code points
 "\xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e"  // the explicit UTF-8 bytes
