@@ -1,20 +1,21 @@
 % !TeX root=../Main.tex
 \chapter{类型}
 一个类型决定了一组值和特定于这些值的操作以及方法。
-一个类型可以通过类型名来表示，如果有的话也可以通过\emph{类型字面量}来指定。
+一个类型可以通过类型名来表示，也可以通过\emph{类型字面量}来指定。
 类型字面量从现有类型中组成一个类型。
 
 \begin{lstlisting}[style=EBNF]
 Type      = TypeName | TypeLit | "(" Type ")" .
 TypeName  = identifier | QualifiedIdent .
-TypeLit   = ArrayType | StructType | PointerType | FunctionType | InterfaceType | SliceType | MapType | ChannelType .
+TypeLit   = ArrayType | StructType | PointerType | FunctionType | InterfaceType |
+			SliceType | MapType | ChannelType .
 \end{lstlisting}
 
 本语言预先声明了一些特定的类型名。
 其余由类型声明来引入。
-\emph{复合类型}---数组，结构体，指针，函数，接口，切片，图，通道类型 --- 可以通过类型字面量构造。
+\emph{复合类型}---数组，结构体，指针，函数，接口，切片，映射，通道类型 --- 可以通过类型字面量构造。
 
-每一个类型 \lstinline|T| 都有一个底层类型：如果 \lstinline|T| 时预声明的布尔，数值，字符串类型或类型字面量中的一个，则相应的底层类型时其自身。
+每一个类型 \lstinline|T| 都有一个底层类型：如果 \lstinline|T| 是预声明的布尔，数值，字符串类型或类型字面量中的一个，则相应的底层类型是其自身。
 否则，\lstinline|T| 的底层类型是 \lstinline|T| 在类型声明中引用到的类型的底层类型。
 \begin{lstlisting}[style=golang]
 type (
@@ -38,8 +39,8 @@ type (
 一个接口类型的方法集是其接口。
 其他任何类型 \lstinline|T| 的方法集由所有使用类型 \lstinline|T| 作为接收器声明的方法组成。
 指针类型 \lstinline|*T| 相应的方法集为所有使用接收器 \lstinline|*T| 或 \lstinline|T| 声明的方法的集合（也就是说，包含 \lstinline|T| 的方法集）。
-此外，如结构体类型章节中所说，这些规则同样适用于包含嵌入字段的结构体。
-任何其他类型则具有空方法集。
+此外，如\hyperref[sec:struct-type]{结构体类型}小节中所说，这些规则同样适用于包含嵌入字段的结构体。
+任何其他类型具有空方法集。
 在一个方法集中，每一个方法必须有一个独一无二的非空方法名。
 
 一个类型的方法集决定了该类型实现的接口和可通过该类型接收器所调用的方法。
@@ -77,7 +78,7 @@ n-bit 整数的值具有 n 个 bit 位，并使用二的补码算术表示。
 \item[int] 和 uint 具有相同大小
 \item[uintptr] 足以存储一个未释义的指针值的所有 bit 的无符号整型。
 \end{description}
-为了避免移植性问题，所有的数值类型都是定义的类型，也就是各不相同，但除了 \lstinline|byte| 是 \lstinline|rune| 的别名，以及 \lstinline|rune| 是 \lstinline|int32| 的别名。
+为了避免移植性问题，所有的数值类型都是定义的类型，也就是各不相同，但除了 \lstinline|byte| 是 \lstinline|uint8| 的别名，以及 \lstinline|rune| 是 \lstinline|int32| 的别名。
 如果一个表达式或赋值中混合了不同的数值类型，则需要进行转换。
 比如 \lstinline|int32| 和 \lstinline|int| 尽管在特定体系结构中具有相同大小，但并不是相同类型。
 
@@ -148,7 +149,7 @@ new([100]int)[0:50]
 使用数组的数组是，内部数组永远具有相同的长度；但是在使用切片的切片时（或者切片的数组），内部长度可以动态的变化。
 此外，内部切片必须独立的初始化。
 
-\section{结构体类型}
+\section{结构体类型}\label{sec:struct-type}
 一个结构体是一个被称为字段的命名元素序列，每一个元素都有一个名字和类型。
 字段名既可以显式的指明（标识符列表），也可以隐式的指明（嵌入字段）。
 在结构体中，非空白字段名必须独一无二的。

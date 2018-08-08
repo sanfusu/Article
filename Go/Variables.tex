@@ -14,7 +14,7 @@
 变量声明时给出的类型，使用 \lstinline|new| 调用或者复合字面值亦或结构化变量的元素类型为变量的静态类型（简称为类型）。
 接口类型变量具有不同的动态类型，其类型为运行时所赋值给变量的值的具体类型
 （除非值为预声明标识符 \lstinline|nil|，这时候没有类型）。
-在执行期间动态类型可能会不同，但是存储在接口变量中的值，永远可以赋值给变量的静态类型。
+在执行期间，动态类型可能会不同，但是存储在接口变量中的值，永远可以赋值给变量的静态类型。
 \begin{lstlisting}[style=golang]
 var x interface{}  // x is nil and has static type interface{}
 var v *T           // v has value nil, static type *T
