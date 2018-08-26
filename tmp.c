@@ -28,10 +28,14 @@ bool IsIn(uint8_t x, uint8_t y, uint8_t z) {
     }
     
     for(int i = 0; i < 3; i++) {
-        if(A[i] != x && A[i] != y && A[i] != z || A[i] == 0) {
+        
+        if(A[i] == 5) A[i] = 2;
+        if(A[i] == 9) A[i] = 6;
+        if(A[i] != x && A[i] != y && A[i] != z) {
             ret = false;
             break;
         }
+        if(A[i] == 0) break;
     }
     return ret;
 }
@@ -65,9 +69,9 @@ int main() {
     }
     for(int i = 0; i < 3; i++) {
         if(input_num[i] > 9 || input_num[i] <= 0) return -1;
-        
-        if(input_num[i] == 2) input_num[i] = 5;
-        if(input_num[i] == 6) input_num[i] = 9;
+
+        if(input_num[i] == 5) input_num[i] = 2;
+        if(input_num[i] == 9) input_num[i] = 6;
     }
     DestNum = GiveNthNum(input_num[0], input_num[1], input_num[2], input_num[3]);
     printf("%d\n", DestNum);
