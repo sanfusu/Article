@@ -268,12 +268,12 @@ var n = nil            // illegal
 
 受限制于实现：编译器可能会认为在函数体内声明一个从未被使用的变量是非法声明。
 
-\section{短变量声明}
+\section{短变量声明}\label{sec:shortVarDeclare}
 短变量声明使用以下格式：
-\begin{lstlisting}[style=EBNF]
+\begin{EBNF}
 ShortVarDecl = IdentifierList ":=" ExpressionList .
-\end{lstlisting}
-这是使用无类型初始化表达式声明变量的简写：
+\end{EBNF}
+相当于常规无类型带初始化的变量声明的简写形式：
 \begin{lstlisting}[style=EBNF]
 "var" IdentifierList = ExpressionList .
 \end{lstlisting}
