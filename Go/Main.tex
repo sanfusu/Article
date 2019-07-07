@@ -1,0 +1,43 @@
+\documentclass[UTF8,SlantFont]{ctexrep}
+
+\input{../template_Daily}
+
+\ctexset {
+	chapter/format += \raggedleft,
+	section/name = {\dag{ },},
+%	section/number = \Roman{section},
+	section/format += \raggedright,
+	subsection/name = {\textbullet,},
+%	subsection/number=\arabic{subsection},
+%	subsection/format += \centering,
+}
+\newcommand{\rune}{符文} % @FIXME 尚未确定 rune 译名
+%\lstset{
+%	language=golang
+%}
+%opening
+\title{Golang}
+\author{sanfusu $<$\href{mailto:sanfusu@foxmail.com}{sanfusu@foxmail.com}$>$ 译校}
+
+\begin{document}
+\maketitle
+\include{./Introduction}
+\include{./Notation}
+\include{./SourceCodeRepresentation/scr}
+\include{./LexicalElements/LEmain}
+\include{./Constants}
+\include{./Variables}
+\include{./Types/Typesmain}
+\include{./PropertiesOfTypesAndValues}
+\include{./Blocks}
+\include{./DeclarationsAndScope}
+\include{./Expressions}
+\include{./Statements}
+\include{./builtinFunction}
+\include{./Packages}
+\include{./ProgramInitializationAndExecution}
+\include{./Errors}
+\include{./RuntimePanics}
+\include{./SystemConsiderations}
+\end{document}
+

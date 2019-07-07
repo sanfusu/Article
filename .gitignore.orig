@@ -1,0 +1,14 @@
+<<<<<<< HEAD
+*.aux
+*.log
+*.pdf
+*.thm
+*.gz
+*.out
+*.synctex.gz
+=======
+*.aux
+*.log
+*.gz
+*.out
+>>>>>>> 29ab049cbe03876a0ae5e763d11d1ceabd84e605

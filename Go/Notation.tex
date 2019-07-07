@@ -1,0 +1,28 @@
+% !TeX root = Main.tex
+
+\chapter{记号}
+% @Note 脚注或许可以去除
+语法格式通过扩展的巴克斯范式（EBNF）表示。
+\begin{EBNF}
+Production	= production_name "=" [ Expression ] "." .
+Expression 	= Alternative { "|" ALternative } .
+Alternative = Term { Term } .
+Term        = production_name | token [ "…" token ] | Group | Option | Repetition .
+Group       = "(" Expression ")" .
+Option      = "[" Expression "]" .
+Repetition  = "{" Expression "}" .
+\end{EBNF}
+
+Productions 是由 terms 以及下列操作符构成的表达式，按递增优先级如下：
+\begin{description}[font=\ttfamily\bfseries, style=nextline, leftmargin=2\parindent, labelindent=\parindent]
+	\item [|] alternation
+	\item [()] grouping
+	\item [{[]}] option (0 or 1 times)
+	\item [\{\}] repetition (0 to n times)
+\end{description}
+小写的产生式名被用来标识词法记号。
+非终止符使用峰驼命名法。
+词法记号被包含在双引号 \code|""| 或者反撇号 \lstinline|``| 中。
+
+ a \dots{} b 形式标识 a 到 b 的可替代集合。水平省略号 \dots{} 在本规范中用来表示各种枚举或代码片段。
+ 字符 \dots（与三个字符 $\ldots$ 相反）并不是 Go 语言中的记号。

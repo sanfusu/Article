@@ -1,0 +1,1167 @@
+\chapter{表达式}
+一个表达式通过对操作数施加运算符和函数来表示一个值的计算。
+
+\section{操作数}
+操作数表示一个表达式中的元素值。
+一个操作数可能是一个字面量，一个非空标识符（可以是被限定的）表示一个常量、变量、或这函数、或者一个参数化的表达式。
+
+空白标识符只能在赋值表达式的左侧作为操作数出现。
+\begin{lstlisting}[style=EBNF]
+Operand     = Literal | OperandName | "(" Expression ")" .
+Literal     = BasicLit | CompositeLit | FunctionLit .
+BasicLit    = int_lit | float_lit | imaginary_lit | rune_lit | string_lit .
+OperandName = identifier | QualifiedIdent.
+\end{lstlisting}
+
+\section{限定的标识符}
+一个限定的标识符是一个使用包名作为前缀限定的标识符。
+包名和标识符均不能为空白标识符。
+\begin{lstlisting}[style=EBNF]
+QualifiedIdent = PackageName "." identifier .
+\end{lstlisting}
+一个限定的标识符可以在不同的包中访问一个被导出的标识符。
+标识符必须被导出并声明在该包的包块中。
+\begin{lstlisting}[style=golang]
+math.Sin	// denotes the Sin function in package math
+\end{lstlisting}
+
+\section{复合字面量}
+复合字面量用于构造结构体，数组，切片和映射，并且每次计算时都会创建一个新值。
+通过字面量的类型以及跟随其后的花括弧组成复合字面量。
+每一个元素前可以加上一个可选的键。
+\begin{lstlisting}[style=EBNF]
+CompositeLit  = LiteralType LiteralValue .
+LiteralType   = StructType | ArrayType | "[" "..." "]" ElementType |
+                SliceType | MapType | TypeName .
+LiteralValue  = "{" [ ElementList [ "," ] ] "}" .
+ElementList   = KeyedElement { "," KeyedElement } .
+KeyedElement  = [ Key ":" ] Element .
+Key           = FieldName | Expression | LiteralValue .
+FieldName     = identifier .
+Element       = Expression | LiteralValue .
+\end{lstlisting}
+
+LiteralType 的底层类型必须时一个结构体、数组、切片、或者映射类型（语法对此作出强制限制，除非该类型作为 TypeName 给出）。
+元素和键的类型必须能够直接（无需转化）赋值给相应的字段、元素和字面量类型的键类型。
+键会被解释为结构体中的字段名、数组和切片字面量的索引和映射字面量的键。
+对于映射字面量，所有的元素必须有一个键。
+如果多个元素具有相同的字段名或者常量键值，则会出错。
+对于非常量映射键，请查看计算顺序章节。
+
+结构体字面量遵循下面规则：
+\begin{itemize}
+\item 键必须是声明在结构体类型中的字段名。
+\item 不包含任何键的元素列表必须按照字段声明顺序列出元素。
+\item 如果某个元素具有一个键，则每一个元素都必须有一个键。
+\item 一个包含键的元素列表不需要为每一个结构体字段都提供元素。省略掉的字段的值为 0。
+\item 一个子民啊量可能会省略元素列表；这样的字面量会被计算为其类型的零值。
+\item 为属于不同的包中的结构体中未导出的字段指定一个元素会导致错误。
+\end{itemize}
+
+给出下列声明：
+\begin{lstlisting}[style=golang]
+type Point3D struct { x, y, z float64 }
+type Line struct { p, q Point3D }
+\end{lstlisting}
+可以写出下列字面量：
+\begin{lstlisting}[style=golang]
+origin := Point3D{}                            // zero value for Point3D
+line := Line{origin, Point3D{y: -4, z: 12.3}}  // zero value for line.q.x
+\end{lstlisting}
+
+对于数组和切片字面量，适用下列规则：
+\begin{itemize}
+\item 每一个元素都有一个关联的整型索引，用来标记在数组中的位置。
+\item 具有键的元素会使用键作为索引。键必须是一个可以被类型 \lstinline|int| 表示的非负常量；
+并且，如果有类型则必须是一个整型。
+\item 一个无键的元素的索引为前一个元素的索引加一。如果第一个元素无键，则索引为 0。
+\end{itemize}
+
+对复合字面量取地址，会产生一个指向使用该字面量值初始化的独一无二的变量的指针。
+\begin{lstlisting}[style=golang]
+var pointer *Point3D = &Point3D{y: 1000}
+\end{lstlisting}
+
+数组字面量的长度是字面量类型中指定的长度。
+如果提供的元素数量少于指定的长度，则缺失的元素会被置为类型为数组元素类型的零值。
+通过数组索引范围之外的索引来获取元素会导致错误。
+记号 \ldots 表示一个等于最大元素索引加一的数组长度。
+\begin{lstlisting}[style=golang]
+buffer := [10]string{}             // len(buffer) == 10
+intSet := [6]int{1, 2, 3, 5}       // len(intSet) == 6
+days := [...]string{"Sat", "Sun"}  // len(days) == 2
+\end{lstlisting}
+
+一个切片字面量秒速了整个底层数组字面量。
+因此，切片字面量的长度和容量是最大元素索引加一。
+一个切片字面量具有如下形式：
+\begin{lstlisting}[style=golang]
+[]T{x1, x2, … xn}
+\end{lstlisting}
+同时是应用于一个数组的切片操作的简写：
+\begin{lstlisting}[style=golang]
+tmp := [n]T{x1, x2, … xn}
+tmp[0 : n]
+\end{lstlisting}
+
+在数组、切片或映射类型 \lstinline|T| 的复合字面量中，
+为自身复合字面量的元素或映射键可以省略相应的字面量类型（如果该字面量类型等于\lstinline|T| 的元素或键类型）。
+相似的，当元素或键类型为 \lstinline|*T|，值为复合字面量地址的元素或键可以省略掉 \lstinline|&T|。
+\begin{lstlisting}[style=golang]
+// same as [...]Point{Point{1.5, -3.5}, Point{0, 0}}
+[...]Point{{1.5, -3.5}, {0, 0}}
+// same as [][]int{[]int{1, 2, 3}, []int{4, 5}}
+[][]int{{1, 2, 3}, {4, 5}}
+// same as [][]Point{[]Point{Point{0, 1}, Point{1, 2}}}
+[][]Point{{{0, 1}, {1, 2}}}
+// same as map[string]Point{"orig": Point{0, 0}}
+map[string]Point{"orig": {0, 0}}
+// same as map[Point]string{Point{0, 0}: "orig"}
+map[Point]string{{0, 0}: "orig"}    
+type PPoint *Point
+// same as [2]*Point{&Point{1.5, -3.5}, &Point{}}
+[2]*Point{{1.5, -3.5}, {}}
+// same as [2]PPoint{PPoint(&Point{1.5, -3.5}), PPoint(&Point{})}
+[2]PPoint{{1.5, -3.5}, {}}
+\end{lstlisting}
+
+当使用 LiteralType 中 TypeName 形式的复合字面量作为操作数出现在关键词和 ``if''，``for''，或 ``switch'' 语句的开花括号之间，并且复合字面量没有被圆括号、方括弧，或者花括弧包含时，会导致解析歧义。
+在这种罕见的情况下，字面量的开括弧会被错误的解释为一个块语句的引入符。
+为了解决这种歧义，复合字面量必须使用原括弧包含。
+\begin{lstlisting}[style=golang]
+if x == (T{a,b,c}[i]) { … }
+if (x == T{a,b,c}[i]) { … }
+\end{lstlisting}
+下面时有效的数组、切片和映射字面量：
+\begin{lstlisting}[style=golang]
+// list of prime numbers
+primes := []int{2, 3, 5, 7, 9, 2147483647}
+
+// vowels[ch] is true if ch is a vowel
+vowels := [128]bool{'a': true, 'e': true, 'i': true, 'o': true, 'u': true, 'y': true}
+
+// the array [10]float32{-1, 0, 0, 0, -0.1, -0.1, 0, 0, 0, -1}
+filter := [10]float32{-1, 4: -0.1, -0.1, 9: -1}
+
+// frequencies in Hz for equal-tempered scale (A4 = 440Hz)
+noteFrequency := map[string]float32{
+	"C0": 16.35, "D0": 18.35, "E0": 20.60, "F0": 21.83,
+	"G0": 24.50, "A0": 27.50, "B0": 30.87,
+}
+\end{lstlisting}
+
+
+\section{函数字面量}
+一个函数字面量表示一个匿名函数。
+\begin{lstlisting}[style=EBNF]
+FunctionLit = "func" Signature FunctionBody .
+\end{lstlisting}
+
+\begin{lstlisting}[style=golang]
+func(a, b int, z float64) bool { return a*b < int(z) }
+\end{lstlisting}
+一个函数字面量可以被赋值给一个变量或者直接调用。
+\begin{lstlisting}[style=golang]
+f := func(x, y int) int { return x + y }
+func(ch chan int) { ch <- ACK }(replyChan)
+\end{lstlisting}
+函数字面量时闭包的：他们可以使用定义在外层函数内的变量。
+这些变量可以在外层函数和函数字面量之间共享，并且只要他们而被访问便可以继续存在。
+
+\section{主表达式}
+主表达式是用作一元和二元表达式的操作数。
+\begin{lstlisting}[style=EBNF]
+PrimaryExpr =
+	Operand |
+	Conversion |
+	MethodExpr |
+	PrimaryExpr Selector |
+	PrimaryExpr Index |
+	PrimaryExpr Slice |
+	PrimaryExpr TypeAssertion |
+	PrimaryExpr Arguments .
+
+Selector       = "." identifier .
+Index          = "[" Expression "]" .
+Slice          = "[" [ Expression ] ":" [ Expression ] "]" |
+                 "[" [ Expression ] ":" Expression ":" Expression "]" .
+TypeAssertion  = "." "(" Type ")" .
+Arguments      = "(" [ ( ExpressionList | Type [ "," ExpressionList ] ) [ "..." ] [ "," ] ] ")" .
+\end{lstlisting}
+
+\begin{lstlisting}[style=golang]
+x
+2
+(s + ".txt")
+f(3.1415, true)
+Point{1, 2}
+m["foo"]
+s[i : j + 1]
+obj.color
+f.p[i].x()
+\end{lstlisting}
+
+\section{选择器}
+对于一个不是包名的组表达式 \lstinline|x|，选择器表达式 \lstinline|x.f| 表示值 \lstinline|x|（有时候会是 \lstinline|*x|） 的字段或者方法 \lstinline|f|。
+标识符 \lstinline|f| 被称为（字段或方法）选择器，必须是一个非空白标识符。
+选择器表达式的类型是 \lstinline|f| 的类型。
+如果 \lstinline|x| 是一个包名，请查看限定标识符章节。
+
+一个选择器 \lstinline|f| 可以表示一个类型 \lstinline|T| 的一个字段或方法 \lstinline|f|，
+也可以表示 \lstinline|T| 的一个嵌套的嵌入字段的字段或方法 \lstinline|f|。
+为了访问 \lstinline|f| 而遍历的嵌入字段的数量称为 \lstinline|f| 在 \lstinline|T| 中的深度。
+声明在 \lstinline|T| 中的一个字段或方法 \lstinline|f| 的深度为 0。
+声明在 \lstinline|T| 中的嵌入字段 \lstinline|A| 的字段或方法的 \lstinline|f| 的深度为 \lstinline|f| 在 \lstinline|A| 中的深度加一。
+
+下面的规则适用于选择器：
+\begin{enumerate}
+\item
+对于类型 \lstinline|T| 或 \lstinline|*T|（\lstinline|T| 不是一个指针或接口类型） 的值，\lstinline|x.f| 表示 \lstinline|T| 最表层深度的 \lstinline|T|。如果最表层深度下不只有一个 \lstinline|f| 则该选择器表达式非法。
+\item 
+对于接口类型 \lstinline|I| 的值 \lstinline|x|，\lstinline|x.f| 表示动态值 \lstinline|x| 中名为 \lstinline|f| 的实际方法。在 \lstinline|f| 的方法集中，如果没有名为 \lstinline|f| 的方法，则该选择器表达式非法。
+\item
+作为例外，如果类型 \lstinline|x| 是个定义的指针类型并且 \lstinline|(*x).f| 是一个表示字段（非方法）的有效的选择器表达式，则 \lstinline|x.f| 可以作为 \lstinline|(*x).f| 的简写。
+\item
+所有其他情况下，\lstinline|x.f| 是非法的。
+\item 
+如果 \lstinline|x| 是一个指针类型，并且值为 \lstinline|nil|，这时使用 \lstinline|x.f| 来表示一个结构体字段、赋值或计算会导致运行时错误。
+\item 
+如果 \lstinline|x| 为接口类型，并且值为 \lstinline|nil|，则调用或计算方法 \lstinline|x.f| 都会引发运行时错误。
+\end{enumerate}
+
+比如，给出下列声明：
+\begin{lstlisting}[style=golang]
+type T0 struct {
+	x int
+}
+
+func (*T0) M0()
+
+type T1 struct {
+	y int
+}
+
+func (T1) M1()
+
+type T2 struct {
+	z int
+	T1
+	*T0
+}
+
+func (*T2) M2()
+
+type Q *T2
+
+var t T2     // with t.T0 != nil
+var p *T2    // with p != nil and (*p).T0 != nil
+var q Q = p
+\end{lstlisting}
+
+可以写出下面的选择器：
+\begin{lstlisting}[style=golang]
+t.z          // t.z
+t.y          // t.T1.y
+t.x          // (*t.T0).x
+
+p.z          // (*p).z
+p.y          // (*p).T1.y
+p.x          // (*(*p).T0).x
+
+q.x          // (*(*q).T0).x        (*q).x is a valid field selector
+
+p.M0()       // ((*p).T0).M0()      M0 expects *T0 receiver
+p.M1()       // ((*p).T1).M1()      M1 expects T1 receiver
+p.M2()       // p.M2()              M2 expects *T2 receiver
+t.M2()       // (&t).M2()           M2 expects *T2 receiver, see section on Calls
+\end{lstlisting}
+但是下面的选择器表达式是无效的：
+\begin{lstlisting}[style=golang]
+q.M0()       // (*q).M0 is valid but not a field selector
+\end{lstlisting}
+
+\section{方法表达式}
+如果 \lstinline|M| 是类型 \lstinline|T| 的方法集，
+\lstinline|T.M| 相当于一个和 \lstinline|M| 使用相同参数，但会前置一个值为方法接收器的额外参数的函数。
+\begin{lstlisting}[style=EBNF]
+MethodExpr    = ReceiverType "." MethodName .
+ReceiverType  = Type .
+\end{lstlisting}
+
+试想一个没有方法的结构体类型 \lstinline|T|，接收器类型为 \lstinline|T| 的 \lstinline|Mv| 和接收器类型为 \lstinline|*T| 的 \lstinline|Mp|。
+\begin{lstlisting}[style=golang]
+type T struct {
+	a int
+}
+func (tv  T) Mv(a int) int         { return 0 }  // value receiver
+func (tp *T) Mp(f float32) float32 { return 1 }  // pointer receiver
+
+var t T
+\end{lstlisting}
+表达式 \lstinline|T.Mv| 会提供一个等价于 \lstinline|Mv| 的函数，但是会带有显式的接收器作为第一个参数；具有如下签字：
+\begin{lstlisting}[style=golang]
+func(tv T, a int) int
+\end{lstlisting}
+该函数可以显式的使用接收器进行正常调用，因此下面五个调用是等价的：
+\begin{lstlisting}[style=golang]
+t.Mv(7)
+T.Mv(t, 7)
+(T).Mv(t, 7)
+f1 := T.Mv; f1(t, 7)
+f2 := (T).Mv; f2(t, 7)
+\end{lstlisting}
+相似的，表达式 \lstinline|(*T).Mp| 提供一个使用如下签字表示的 \lstinline|Mp| 函数值：
+\begin{lstlisting}[style=golang]
+func(tp *T, f float32) float32
+\end{lstlisting}
+
+对于具有值接收器的方法，可以使用显式指针接收器派生一个函数，因此 \lstinline|(*T).Mv| 提供了一个使用如下签字表示的函数值：
+\begin{lstlisting}[style=golang]
+func(tv *T, a int) int
+\end{lstlisting}
+这种函数间接的通过接收器创建一个值作为接收器传递给底层方法；
+方法不会重写传递给函数调用的值。
+
+最后，将值接收器函数用作一个指针接收器方法是非法的，因为指针接收器方法不在值类型的方法集中。
+
+派生自方法的函数值可以使用函数调用语法格式进行调用，接收器会作为调用的第一个参数。
+也就是，给出 \lstinline|f := T.Mv|，\lstinline|f| 会作为 \lstinline|f(t, 7)| 调用，而不是 \lstinline|t.f(7)|。
+为了构造一个绑定接收器的函数，需要使用函数字面量或这方法值。
+
+从一个接口类型的方法中派生出一个函数值是合法的。
+结果函数会带有一个具有该接口类型的显式接收器。
+
+\section{方法值}
+如果表达式 \lstinline|x| 具有静态类型 \lstinline|T|，并且 \lstinline|M| 存在于类型 \lstinline|T| 的方法集中，则 \lstinline|x.M| 被称为一个方法值。
+方法值 \lstinline|x.M| 是一个可使用于 \lstinline|x.M| 方法调用一样的参数进行调用的函数值。
+表达式 \lstinline|x| 可以在方法值计算的过程中计算并保存；被保存的拷贝值可以在任何调用做为接收器，以便在后续执行中使用。
+
+类型 \lstinline|T| 可以是一个接口或非接口类型。
+
+如上所讨论的方法表达式，试想一个有两个方法的结构体类型 \lstinline|T|，\lstinline|Mv| 的接收器类型为 \lstinline|T|，\lstinline|Mp| 的接收器类型为 \lstinline|*T|。
+\begin{lstlisting}[style=golang]
+type T struct {
+	a int
+}
+func (tv  T) Mv(a int) int         { return 0 }  // value receiver
+func (tp *T) Mp(f float32) float32 { return 1 }  // pointer receiver
+
+var t T
+var pt *T
+func makeT() T
+\end{lstlisting} 
+表达式 \lstinline|t.Mv| 提供一个类型为 \lstinline[style=golang]|func(int) int| 的函数值。
+下面两个调用是等价的：
+\begin{lstlisting}[style=golang]
+t.Mv(7)
+f := t.Mv; f(7)
+\end{lstlisting}
+相似的，表达式 \lstinline|pt.Mp| 提供一个类型为 \lstinline[style=golang]|func(float32) float32| 的函数值。
+
+和选择器一样，使用指针对带有值接收器的非接口方法进行引用会自动反引用该指针：\lstinline|pt.Mv| 等价于 \lstinline|(*pt).Mv|。
+
+和方法调用一样，使用一个可取地址的值对带有指针接收器的非接口方法进行引用会自动获取该值的地址：\lstinline|t.Mp| 等价于 \lstinline|(&t).Mp|。
+\begin{lstlisting}[style=golang]
+f := t.Mv; f(7)   // like t.Mv(7)
+f := pt.Mp; f(7)  // like pt.Mp(7)
+f := pt.Mv; f(7)  // like (*pt).Mv(7)
+f := t.Mp; f(7)   // like (&t).Mp(7)
+f := makeT().Mp   // invalid: result of makeT() is not addressable
+\end{lstlisting}
+尽管上述示例中使用了非接口类型，但仍可以合法的从接口类型值中创建一个方法值。
+\begin{lstlisting}[style=golang]
+var i interface { M(int) } = myVal
+f := i.M; f(7)  // like i.M(7)
+\end{lstlisting}
+
+\section{索引表达式}
+具有 \lstinline|a[x]| 形式的主表达式表示由 \lstinline|x| 索引的数组、数组指针、切片、字符串或映射 \lstinline|a| 的元素。
+值 \lstinline|x| 被相应的称为索引或映射键。
+适用于下列规则：
+
+如果 \lstinline|a| 不是一个映射：
+\begin{itemize}
+\item 索引必须是一个整型或者是一个无类型常量
+\item 一个常量索引必须是一个非负且能被类型 \lstinline|int| 表示的值
+\item 一个无类型常量索引会被认为是 \lstinline|int| 类型
+\item 索引 \lstinline|x| 需要在 $0 \leq x < len(a)$ 范围内，否在将超出范围。
+\end{itemize}
+
+对于数组类型 \lstinline|A|：
+\begin{itemize}
+\item 一个常量索引必须在范围内
+\item 如果 \lstinline|x| 在运行时超出范围，将发生运行时错误
+\item \lstinline|a[x]| 为在索引 \lstinline|x| 处的数组元素，并且 \lstinline|a[x]| 的类型是 \lstinline|A| 的元素类型
+\end{itemize}
+对于指向数组类型的指针（数组指针） \lstinline|a|：
+\begin{itemize}
+\item \lstinline|a[x]| 是 \lstinline|(*a)[x]| 的简写
+\end{itemize}
+对于切片类型 \lstinline|S| 的 \lstinline|a|：
+\begin{itemize}
+\item 如果 \lstinline|x| 运行时超出范围，将会发送运行时错误
+\item \lstinline|a[x]| 时在索引 \lstinline|x| 处的切片元素，并且 \lstinline|a[x]| 的类型是 \lstinline|S| 的元素类型
+\end{itemize}
+对于字符串类型 \lstinline|a|
+\begin{itemize}
+\item 如果字符串 \lstinline|a| 是常量，则常量索引也必须在范围内
+\item 如果 \lstinline|x| 在运行时超出范围，将导致运行时错误发生
+\item \lstinline|a[x]| 是一个在索引 \lstinline|x| 处的非常量字节，并且 \lstinline|a[x]| 的类型为 \lstinline|byte|
+\item \lstinline|a[x]| 无法被赋值
+\end{itemize}
+对于类型为映射类型 \lstinline|M| 的 \lstinline|a|：
+\begin{itemize}
+\item \lstinline|x| 的类型必须可以被赋值给 \lstinline|M| 的键类型
+\item 如果映射包含一个使用 \lstinline|x| 键的条目，\lstinline|a[x]| 是键为 \lstinline|x| 的映射元素，并且 \lstinline|a[x]| 的类型为 \lstinline|M| 的
+\end{itemize}
+其余情况 \lstinline|a[x]| 是非法的。
+
+类型为 \lstinline|map[K]V| 的映射 \lstinline|a| 的索引表达式在赋值或初始化时会使用下面的特殊形式：
+\begin{lstlisting}[style=golang]
+v, ok = a[x]
+v, ok := a[x]
+var v, ok = a[x]
+var v, ok T = a[x]
+\end{lstlisting}
+提供额外的无类型布尔值。如果键 \lstinline|x| 出现在映射中，则 \lstinline|ok| 的值为 \lstinline|true|，否则为 \lstinline|false|。
+
+向 \lstinline|nil| 映射中的一个元素赋值会导致运行时错误。
+
+\section{切片表达式}
+切片表达式可以从字符串、数组、数组指针或切片中构造出一个子字符串或切片。
+有两个变种：一个指定高低边界的简单形式和一个同样指出边界容量的完全形式。
+
+\subsection{简单切片表达式}
+对于字符串、数组、数组指针或切片 \lstinline|a|，主表达式 \lstinline|a[low:high]| 构造一个子字符串或切片。
+索引 \lstinline|low| 和 \lstinline|high| 用来决定操作数 \lstinline|a| 的哪些元素可以被选进结果。
+结果索引起始于 0，且长度等于 \lstinline|high-low|。
+在对数组 \lstinline|a| 切片之后
+\begin{lstlisting}[style=golang]
+a := [5]int{1, 2, 3, 4, 5}
+s := a[1:4]
+\end{lstlisting}
+切片 \lstinline|s| 具有类型 \lstinline|[]int|，长度 3，容量 4，和元素
+\begin{lstlisting}[style=golang]
+s[0] == 2
+s[1] == 3
+s[2] == 4
+\end{lstlisting}
+为方便，仍和索引指标都可以被省略。
+缺失的 \lstinline|low| 索引默认为 0；缺失的 \lstinline|high| 则默认为被切操作数的长度。
+\begin{lstlisting}[style=golang]
+a[2:]  // same as a[2 : len(a)]
+a[:3]  // same as a[0 : 3]
+a[:]   // same as a[0 : len(a)]
+\end{lstlisting}
+如果 a 是一个数组指针，\lstinline|(*a)[low : high]| 可以简写为 \lstinline|a[low : high]|。
+对于数组或字符串，索引指标需要在 $0 \leq low \leq high \leq len(a)$ 范围之内，否则被认为超出范围。
+对于切片，上索引边界时切片的容量 \lstinline|cap(a)| 而非长度。
+常量索引必须是非负数并且可以被类型 \lstinline|int| 表示；对于数组或常量字符串，常量索引指标必须同样在范围内。
+如果两个索引指标都是常量，则必须满足条件 $low \leq high$。如果索引指标在运行时超出范围，则会发生运行时错误。
+
+除了无类型字符串，如果被切操作数是一个字符串或切片，则切片运算的结果是一个和操作数相同类型的非常量值。
+对于无类型字符串操作数，结果是一个字符串类型的非常量值。
+如果被切操作数是一个数组，则该数组必须可取地址，并且切片操作的结果是一个和数组具有相同元素类型的切片。
+
+如果一个有效的切片表达式的被切操作数是一个 \lstinline|nil| 切片，则结果仍是一个 \lstinline|nil| 切片。否则，如果结果是一个切片则将于操作数共享底层数组。
+
+\subsection{完全切片表达式}
+对于数组，数组指针，或者切片 \lstinline|a| （但非字符串），主表达式
+\begin{lstlisting}[style=golang]
+a[low : high : max]
+\end{lstlisting}
+构造了一个和简单表达式 \lstinline|a[low : high]| 具有相同类型和长度以及元素的切片。
+除此之外，还将结果切片的容量设置为 \lstinline|max - low|。
+值有第一个索引可以被省略；其默认值为 0。
+在对一个数组 \lstinline|a| 进行切片后
+\begin{lstlisting}[style=golang]
+a := [5]int{1, 2, 3, 4, 5}
+t := a[1:3:5]
+\end{lstlisting}
+切片 \lstinline|t| 具有 \lstinline|[]int| 类型，长度 2，容量 4，并且元素 
+\begin{lstlisting}[style=golang]
+t[0] == 2
+t[1] == 3
+\end{lstlisting}
+
+和简单切片表达式一样，如果 \lstinline|a| 是一个数组指针，
+\lstinline|(*a)[low : high : max]| 可以简写为 \lstinline|a[low : high : max]| 。
+如果被切操作数是一个数组，则该数组必须可取地址。
+
+索引指标必须满足条件 $0 \leq low \leq high \leq max \leq cap(a)$，否则将超出范围。
+一个常量索引必须是非负切能被 \lstinline|int| 类型表示。
+对于数组，常量索引下标必须在范围内。
+如果多个索引下标是常量，则表达出来的常量必须在彼此相对范围内。
+如果索引下标运行时超出范围，则会导致运行时错误。
+
+\section{类型断言}
+对于接口类型的表达式 \lstinline|x| 和类型 \lstinline|T|，主表达式
+\begin{lstlisting}[style=golang]
+x.(T)
+\end{lstlisting}
+将断言 \lstinline|x| 不是 \lstinline|nil|，切存储在 \lstinline|x| 中的值为类型 \lstinline|T|。记号 \lstinline|x.(T)| 被称为一个类型断言。
+
+更精确的讲，如果类型 \lstinline|T| 不是一个接口类型，\lstinline|x.(T)|将断言 \lstinline|x| 的动态类型 \lstinline|x| 等于类型 \lstinline|T|。 
+这种情况下 \lstinline|T| 必须实现类型 \lstinline|x| 的接口；否则类型断言将无效，因为 \lstinline|x| 无法存储类型 \lstinline|T| 的值。
+如果 \lstinline|T| 是一个接口类型，\lstinline|x.(T)| 可以断言 \lstinline|x| 的动态类型实现了接口 \lstinline|T|
+
+如果类型断言正确，表达式的值为存储在 \lstinline|x| 中的值，且类型为 \lstinline|T|。
+如果类型断言错误，则会发送运行时错误。
+换句话说，即便 \lstinline|x| 的动态类型只能在运行时被知晓，但在正确的程序中 x.(T) 的类型仍可以被视为 \lstinline|T|。
+\begin{lstlisting}[style=golang]
+var x interface{} = 7          // x has dynamic type int and value 7
+i := x.(int)                   // i has type int and value 7
+
+type I interface { m() }
+
+func f(y I) {
+// illegal: string does not implement I (missing method m)
+	s := y.(string)
+
+// r has type io.Reader and the dynamic type of y must implement both I and io.Reader 
+	r := y.(io.Reader)
+	…
+}
+\end{lstlisting}
+
+类型断言可以被用在特殊形式的赋值或初始化中
+\begin{lstlisting}[style=golang]
+v, ok = x.(T)
+v, ok := x.(T)
+var v, ok = x.(T)
+var v, ok T1 = x.(T)
+\end{lstlisting}
+提供了额外的无类型布尔值。
+如果断言正确，\lstinline|ok| 的值为 \lstinline|true|，否则为 \lstinline|false|。
+且 \lstinline|v| 的值为 0，类型为 \lstinline|T|。
+这种情况下不会发送运行时错误。
+
+
+\section{调用}
+给定函数类型 \lstinline|F| 的表达式 \lstinline|f|，
+\begin{lstlisting}[style=golang]
+f(a1, a2, … an)
+\end{lstlisting}
+使用参数 \lstinline|a1, a2, ...an| 调用 \lstinline|f|。
+除了一个特殊情况，参数必须是可赋值给 \lstinline|F| 的形参类型的单值表达，并在被调用之前被计算。
+表达式的类型是 \lstinline|F| 的结果类型。
+方法调用于此相似，但是方法本身作为立于接收器之上的选择器。
+\begin{lstlisting}[style=golang]
+math.Atan2(x, y)  // function call
+var pt *Point
+pt.Scale(3.5)     // method call with receiver pt
+\end{lstlisting}
+
+在函数调用中，函数值和参数会按照通常顺序进行计算。
+当这些值被计算后，调用参数会在被调函数开始执行时按值传入。
+函数的返回参数会在函数返回时按值传递回调用函数。
+
+调用一个 \lstinline|nil| 函数会导致运行时错误。
+
+作为特例，如果函数或方法 \lstinline|g| 的返回值在数量上相等并各自赋值给另一个函数或方法 \lstinline|f| 的参数，然后调用 \lstinline|f(g(parameters_of_g))| 会在 \lstinline|g| 的返回值按序绑定到 \lstinline|f| 的参数后调用 \lstinline|f|。
+\lstinline|f| 的调用不能包含除 \lstinline|g| 的调用之外的参数，且 \lstinline|g| 至少得有一个返回值。
+如果 \lstinline|f| 最后有一个 \ldots 参数，则会被赋予 \lstinline|g| 的多余返回值。
+\begin{lstlisting}[style=golang]
+func Split(s string, pos int) (string, string) {
+	return s[0:pos], s[pos:]
+}
+
+func Join(s, t string) string {
+	return s + t
+}
+
+if Join(Split(value, len(value)/2)) != value {
+	log.Panic("test fails")
+}
+\end{lstlisting}
+如果 \lstinline|x| 的方法集包含 \lstinline|m| 并且参数可以被赋予 \lstinline|m| 的参数列表， 则 \lstinline|x.m()| 方法调用有效。
+如果 \code|x| 是可寻址的且 \code|&x| 的方法集包含 \code|m|，\code|(&x).m()| 可以简写为 \code|x.m()|：
+\begin{lstlisting}[style=golang]
+var p Point
+p.Scale(3.5)
+\end{lstlisting}
+% There is no distinct method type and there are no method literals. 
+
+\section{传递参数给 \ldots 形参}
+如果 \lstinline|f| 的最后一个形参 \lstinline|p| 为具有类型 \lstinline|...T| 的可变形参，则 \lstinline|f| 中 \lstinline|p| 的类型等于类型 \lstinline|[]T|。
+如果调用 \lstinline|f| 的时候没有为 \lstinline|p| 提供实参，则传递给 \code|p| 的值为 \code|nil|。
+不然，所传入的值为类型 \code|[]T| 的新底层数组的一个新切片，其连续元素为实参，这些实参必须能够赋值给 \code|T|。
+切片的长度和容量为 \code|p| 所绑定的参数数量，可能会不同于每一次调用。
+
+给出函数和调用：
+\begin{lstlisting}[style=golang]
+func Greeting(prefix string, who ...string)
+Greeting("nobody")
+Greeting("hello:", "Joe", "Anna", "Eileen")
+\end{lstlisting}
+在 \code|Greeting| 的第一次调用中， \code|who| 的值为 \code|nil|，且在第二次调用中值为 \code|[]string{"Joe", "Anna", "Eileen"}| 。
+
+如果最后一个参数可以被赋值给切片类型 \code|[]T| 且形参跟在 \ldots 后面，则可以无修改的作为 \code|...T| 的值传入。
+这种情况下不会创建新的切片。
+
+给定切片 \code|s| 和调用
+\begin{lstlisting}[style=golang]
+s := []string{"James", "Jasmine"}
+Greeting("goodbye:", s...)
+\end{lstlisting}
+在 \code|Greeting| 中，\code|who| 和 \code|s| 具有相同的底层数组。
+
+\section{运算符}
+运算符会将操作数绑定到一个表达式中。
+\begin{lstlisting}[style=EBNF]
+Expression = UnaryExpr | Expression binary_op Expression .
+UnaryExpr  = PrimaryExpr | unary_op UnaryExpr .
+
+binary_op  = "||" | "&&" | rel_op | add_op | mul_op .
+rel_op     = "==" | "!=" | "<" | "<=" | ">" | ">=" .
+add_op     = "+" | "-" | "|" | "^" .
+mul_op     = "*" | "/" | "%" | "<<" | ">>" | "&" | "&^" .
+
+unary_op   = "+" | "-" | "!" | "^" | "*" | "&" | "<-" .
+\end{lstlisting}
+比较运算符会在其他地方讨论。
+对于其他二元运算符，除了运算涉及位移或无类型常量，则操作数类型必须相等。
+对于只涉及常量的运算，请查看常量表达式章节。
+
+除了移位运算，如果一个操作数时无类型常量，而另一操作数不是，该常量则会被转换为另一个操作数类型。
+
+移位表达式中的右操作数必须具有无符号整数类型或者是一个可以被 \code|uint| 表示的无类型常量。
+如果非常量移位表达式的左操作数是一个无类型常量，且只有移位表达式被左操作数替换，则会被先转换为其假定的类型。
+\begin{lstlisting}[style=golang]
+var s uint = 33
+var i = 1<<s                  // 1 has type int
+var j int32 = 1<<s            // 1 has type int32; j == 0
+var k = uint64(1<<s)          // 1 has type uint64; k == 1<<33
+var m int = 1.0<<s            // 1.0 has type int; m == 0 if ints are 32bits 
+							  // in size
+var n = 1.0<<s == j           // 1.0 has type int32; n == true
+var o = 1<<s == 2<<s          // 1 and 2 have type int; o == true if ints are 
+							  // 32bits in size
+var p = 1<<s == 1<<33         // illegal if ints are 32bits in size: 1 has 
+							  // type int, but 1<<33 overflows int
+var u = 1.0<<s                // illegal: 1.0 has type float64, cannot shift
+var u1 = 1.0<<s != 0          // illegal: 1.0 has type float64, cannot shift
+var u2 = 1<<s != 1.0          // illegal: 1 has type float64, cannot shift
+var v float32 = 1<<s          // illegal: 1 has type float32, cannot shift
+var w int64 = 1.0<<33         // 1.0<<33 is a constant shift expression
+var x = a[1.0<<s]             // 1.0 has type int; x == a[0] if ints are   
+							  // 32bits in size
+var a = make([]byte, 1.0<<s)  // 1.0 has type int; len(a) == 0 if ints are 
+							  // 32bits in size
+\end{lstlisting}
+
+\subsection{运算符优先级}
+一元运算符具有最搞优先级。
+\code|++| 和 |--| 运算符作为语句而不是表达式，故不在运算符层级之内。
+相应的，语句 \code|*p++| 和 \code|(*p)++| 一样。
+
+二元运算符有五个优先级。
+乘法运算符绑定更紧密，后面时加法运算符，比较运算符，\code|&&|（逻辑与），和最后的 \code@||@（逻辑或）：
+\begin{table}[h]
+\centering
+\begin{tabularx}{.5\textwidth}{c|X}
+{\bfseries 优先级} & {\bfseries 运算符} \\
+\hline
+5 	  &		\lstinline|*  /  \%  <<  >>  \&  \&^| \\
+4     &     \code@+  -  |  ^@		\\
+3     &     \code@==  !=  <  <=  >  >=@ \\
+2     &     \code@\&\&@				\\
+1     &      \code@||@ \\
+\end{tabularx}
+\end{table}
+
+相同优先级的二元运算符从左向右关联。比如，\code|x/y*z| 等同于 \code|(x/y)*z|。
+
+\begin{lstlisting}[style=golang]
++x
+23 + 3*x[i]
+x <= f()
+^a >> b
+f() || g()
+x == y+1 && <-chanPtr > 0
+\end{lstlisting}
+
+\section{算术运算符}
+算术运算符适用于数值并能提供和第一个操作数相同类型的结果。
+四个标准算术运算符（\code|+,-,*,/|）适用于整型，浮点，和复数类型；
+\code|+| 同样适用于字符串。
+按位逻辑和移位运算符只适用于整型。
+\begin{table}[H]
+\centering
+\begin{tabularx}{.8\textwidth}{llX}
++ & sum                    & integers, floats, complex values, strings \\
+- & difference             & integers, floats, complex values	\\
+\code|*| & product                & integers, floats, complex values	\\
+/ & quotient               & integers, floats, complex values	\\
+\% & remainder              & integers		\\
+\& & bitwise AND            & integers	\\
+| & bitwise OR             & integers	\\
+\code|\^| & bitwise XOR            & integers	\\
+\code|\&\^| & bit clear (AND NOT)    & integers	\\
+\code|<<| & left shift             & integer \code|<<| unsigned integer	\\
+\code|>>| & right shift            & integer \code|>>| unsigned integer	\\
+\end{tabularx}
+\end{table}
+
+\subsection{整型运算符}
+对于两个整型值 \code|x| 和 \code|y|，整型商 \code|q = x / y| 和余数 \code|r = x % y| 满足下列关系：
+\[
+x = q\cdot y + r \text{and} |r| < |y|
+\]
+其中 \code|x / y| 会趋零截断（``被截断的除法''）。
+\begin{table}[H]
+\centering
+\begin{tabular}{cccc}
+ \code|x|  &   \code|y|  &   \code|x / y| &    \code|x % y| 	\\	\hline
+ 5  &   3  &     1   &      2 		\\
+-5  &   3  &    -1   &     -2		\\
+ 5  &  -3  &    -1   &      2		\\
+-5  &  -3  &     1   &     -2		\\
+\end{tabular}
+\end{table}
+该规则的一个特例是，如果被除数 \code|x| 是最小负 \code|int| 型的值，
+商 \code|q = x / -1| 由于二的补码整型溢出关系等于 \code|x| 且 \code|r = 0|：
+\begin{table}[H]
+\centering
+\begin{tabular}{cr}
+& \code|x, q|	\\
+\code|int8| & -128 \\
+\code|int16| & -32768 \\
+\code|int32| & -2147483648 \\
+\code|int64| &  -9223372036854775808 \\
+\end{tabular}
+\end{table}
+
+如果除数是一个常量，则必须非零。
+如果除数在运行时为 0，那么会发生运行时错误。
+如果被除数非负且除数是 2 的常量幂，则除法可能会被替换为右移，并且余数运算可能会被按位与操作替换。
+\begin{table}[h]
+\centering
+\begin{tabular}{ccccc}
+ \code|x|  &   \code|x / 4| &    \code|x % 4|  &   \code|x >> 2|  &  \code|x & 3| \\
+ 11   &   2     &    3    &     2     &     3 \\
+-11   &  -2      &  -3    &    -3    &      1 \\
+\end{tabular}
+\end{table}
+移位运算符会将左操作数位移右操作数指定的位数。
+如果左操作数是一个有符号整型且移位运算符则会被实现为算术移位；如果是一个无符号整型，则会被时限为逻辑位移。
+位移的位数没有上限。
+位移 n 位表现为每一次位移 1 位，且重复 n 次。
+结果上， \code|x << 1| 和 \code|x*2| 相同，而 \code|x >> 1| 和趋负无穷截断的 \code|x/2| 相同。
+
+对于整型操作数，一元运算符 \code|+|, \code|-| 和 \code|^| 的定义如下：
+\begin{description}[style=sameline, leftmargin=3\parindent]
+\item[x] 相当于 \code|0 +x|
+\item[-x] 取负号，相当于 \code|0 - x|
+\item[\^{}x] 按位取补，相当于 \code|m ^ x|，其中 \code|m| 为无符号 \code|x| 的所有 bit 位置 1；如果 \code|x| 为有符号，则 \code|m = -1|
+\end{description}
+
+\subsection{整型溢出}
+对于符号整型值，\code|+|、\code|-|、\code|*| 和 \code|<<| 运算会进行模 $2^n$ 处理，其中 $n$ 是无符号整数类型的 bit 宽度。
+简单的来讲，这些无符号整型操作会舍弃溢出的高 bit 位，且程序可以依赖于这种``环绕''特性。
+
+对于有符号整型，\code|+|、\code|-|、\code|*| 和 \code|<<| 运算可以进行合法的溢出，并且结果值取决于有符号整型的表示、操作和其操作数。
+当结果溢出时，不会发生异常。
+编译器不会假定溢出不会发生，从而做出优化。
+比如：编译器不会假定 \code|x < x + 1| 永远为 \code|true|。
+
+\subsection{浮点运算符}
+对于浮点数和复数， \code|+x| 等同于 \code|x|，而 \code|-x| 为 \code|x| 的负。
+浮点数或复数被 0 除的结果超出 IEEE-754 标准，是否发生运行时错误受限于具体实现。
+
+一个实现可能会将多个浮点运算组合为单个伪运算，并且提供一个跨语句，且不同于各自独立进行四舍五入计算所获取的值。
+一个浮点类型转换会显式的四舍五入到目标类型的精度，防止伪操作舍弃四舍五入。
+
+比如，一些架构会提供 ``伪乘和加法''（FMA）指令，该指令在计算 \code|x*y + z| 时不会在立即对 \code|x*y| 的结果取约。下列示例中展示了 Go 实现何时会使用这些指令：
+\begin{lstlisting}[style=golang]
+// FMA allowed for computing r, because x*y is not explicitly rounded:
+r  = x*y + z
+r  = z;   r += x*y
+t  = x*y; r = t + z
+*p = x*y; r = *p + z
+r  = x*y + float64(z)
+
+// FMA disallowed for computing r, because it would omit rounding of x*y:
+r  = float64(x*y) + z
+r  = z; r += float64(x*y)
+t  = float64(x*y); r = t + z
+\end{lstlisting}
+
+\subsection{字符串连接}
+字符串可以使用 \code|+| 运算符或 \code|+=| 赋值运算符连接：
+\begin{lstlisting}[style=golang]
+s := "hi" + string(c)
+s += " and good bye"
+\end{lstlisting}
+字符串加法会通过连接操作数来创建一个新的字符串。
+
+\section{比较运算符}
+比较运算符会比较两个操作数，并提供一个无类型布尔值。
+\begin{description}[style=sameline, leftmargin=2\parindent]
+\item[==] 等于
+\item[!=] 不等于
+\item[<] 小于
+\item[<=] 小于或等于
+\item[>] 大于
+\item[>=] 大于或等于
+\end{description}
+在任何比较中，第一操作数必须可赋值给第一个操作数的类型，反之亦然。
+
+等性操作符 \code|==| 和 \code|!=| 适用于可比较的操作数。
+排序运算符 \code|<|、\code|<=|、和 \code|>=| 适用于有序操作数。
+这些术语以及比较结果定义如下：
+\begin{itemize}
+\item 布尔值是可比较的。仅当两个布尔值均为 \code|true| 或 \code|false| 时相等。
+\item 整型值通常意义上，是可比较且有序的。
+\item 浮点值按照 IEEE-754 标准是可比较且有序的。
+\item 复数值是可比较的。两个复数值 \code|u| 和 \code|v| 仅在 \code|real(u) == real(v)| 且 \code|imag(u) == imag(v)| 时相等。
+\item 字符串值在词法上按字节时可比较且有序的。
+\item 指针值时可比较的。两个指针当其指向相同的变量或者值均为 \code|nil| 时相等。
+指向不同的 0 大小变量的指针可能相等也可能不相等。
+\item 通道值时可比较的。 \code|make| 调用而创建的两个通道值相等，或者当其值均为 \code|nil| 时相等。
+\item 接口值是可比较的。当两个接口具有等价的动态类型和相等的动态值或值均为 \code|nil| 时，两个接口值相等。
+\item  一个非接口类型 \code|X| 的值 \code|x| 和接口类型 \code|T| 的值 \code|t|，当类型 \code|X| 的值可以比较是且 \code|X| 实现了 \code|T| 时可比较。
+如果 \code|t| 的动态类型等价于 \code|X| 且 \code|t| 的动态值等于 \code|x|，\code|x| 和 \code|t| 相等。
+\item 当结构体的所有字段都是可比较时，结构体的值可比较。两个结构体相应的非空白字段相等时相等。
+\item 当数组元素类型的值可比较时，数组值可比较。当两个数组值相应的元素相等时，两个数组值相等。
+\end{itemize}
+如果接口值的类型不可比较，则比较两个具有等价动态类型的接口值时会导致运行时错误。
+这种行为不仅适用于接口值直接比较，也适用于接口值数组或具有接口值字段的结构体比较。
+
+切片、映射和函数值是不可比较的。但是，这些值可以和预声明标识符 \code|nil| 比较。
+同样允许将指针、通道和接口值和 \code|nil| 比较，并遵循上述的通用规则。
+\begin{lstlisting}[style=golang]
+const c = 3 < 4		 // c is the untyped boolean constant true
+
+type MyBool bool
+var x, y int
+var (
+	// The result of a comparison is an untyped boolean.
+	// The usual assignment rules apply.
+	b3        = x == y // b3 has type bool
+	b4 bool   = x == y // b4 has type bool
+	b5 MyBool = x == y // b5 has type MyBool
+)
+\end{lstlisting}
+
+
+
+\section{逻辑运算符}
+逻辑运算符适用于布尔值，并提供和操作数相同类型的结果。
+右运算符会根据条件进行计算。
+\begin{table}[h]
+\centering
+\begin{tabular}{lll}
+\code|&&| & 条件与 &  \code|p && q| 为 ``if p then q else false'' \\
+\code!||!	& 条件或 & \code!p || q! 为 ``if p then true else q'' \\
+\code|!|  & 非 & \code|!p| 为 ``not p'' \\
+\end{tabular}
+\end{table}
+
+\section{地址运算符}
+对于类型为 \code|T| 的操作数 \code|x|，取地址运算 \code|&x| 会产生一个指向 \code|x| 的 \code|*T| 类型的指针。
+操作数必须时可寻址的，也就是说可以是：一个变量、指针反引用，或切片索引运算、一个可寻址结构体操作数的字段选择器；
+或者可寻址数组的数组索引运算。
+作为可寻址的特例，\code|x| 同时可以是一个复合字面量（可以用圆括弧包含）。
+如果 \code|x| 的计算会导致一个运行时错误，那么 \code|&x| 同样也会导致运行时错误。
+\begin{lstlisting}[style=golang]
+&x
+&a[f(2)]
+&Point{2, 3}
+*p
+*pf(x)
+
+var x *int = nil
+*x 	 // causes a run-time panic
+&*x  // causes a run-time panic
+\end{lstlisting}
+
+\section{接收运算符}
+对于通道类型的操作数 \code|ch|，接收运算 \code|<-ch| 的值为从通道 \code|ch| 中接收到的值。
+通道方向必须允许接收运算，且接收运算的类型为通道的元素类型。
+表达式会一直阻塞到有可获得的值。
+从一个 \code|nil| 通道接收值会一直阻塞。
+闭合通道上的接收运算永远会立即关闭，并在任何前一个发送的值已被接收后，提供一个元素类型的 0 值。
+\begin{lstlisting}[style=golang]
+v1 := <-ch
+v2 = <-ch
+f(<-ch)
+<-strobe  // wait until clock pulse and discard received value
+\end{lstlisting}
+
+在赋值或初始化中的接收表达式的特殊形式
+\begin{lstlisting}[style=golang]
+x, ok = <-ch
+x, ok := <-ch
+var x, ok = <-ch
+var x, ok T = <-ch
+\end{lstlisting}
+会提供一个报告通信是否成功的无类型布尔结果。
+如果接收的值被一个成功的发送通道操作传达\code|ok| 的值为 \code|true|；
+如果通道是关闭的或为空，则会产生一个 \code|false|。
+
+\section{转换}
+转换是 \code|T(x)| 形式的表达式，其中 \code|T| 是一个类型且 \code|x| 是一个可以被转换为类型 \code|T| 的表达式。
+\begin{lstlisting}[style=EBNF]
+Conversion = Type "(" Expression [ "," ] ")" .
+\end{lstlisting}
+如果类型起始于运算符 \code|*| 或 \code|<-|，或者起始于关键词 \code|func| 同时没有结果列表，那么必要时必须使用圆括弧包含来避免歧义；
+\begin{lstlisting}[style=golang]
+*Point(p)        // same as *(Point(p))
+(*Point)(p)      // p is converted to *Point
+<-chan int(c)    // same as <-(chan int(c))
+(<-chan int)(c)  // c is converted to <-chan int
+func()(x)        // function signature func() x
+(func())(x)      // x is converted to func()
+(func() int)(x)  // x is converted to func() int
+func() int(x)    // x is converted to func() int (unambiguous)
+\end{lstlisting}
+如果常量值 \code|x| 可以被类型 \code|T| 的值表示，则 \code|x| 可以转换为类型 \code|T|。
+作为特殊情况，整型常量 \code|x| 可以使用和非常量 \code|x| 相同的规则转换为一个字符串类型。
+\begin{lstlisting}[style=golang]
+uint(iota)               // iota value of type uint
+float32(2.718281828)     // 2.718281828 of type float32
+complex128(1)            // 1.0 + 0.0i of type complex128
+float32(0.49999999)      // 0.5 of type float32
+float64(-1e-1000)        // 0.0 of type float64
+string('x')              // "x" of type string
+string(0x266c)           // "♬" of type string
+MyString("foo" + "bar")  // "foobar" of type MyString
+string([]byte{'a'})      // not a constant: []byte{'a'} is not a constant
+(*int)(nil)              // not a constant: nil is not a constant, 
+						 // *int is not a boolean, numeric, or string type
+int(1.2)                 // illegal: 1.2 cannot be represented as an int
+string(65.0)             // illegal: 65.0 is not an integer constant
+\end{lstlisting}
+
+下列情况下，非常量值 \code|x| 可以被转换为类型 \code|T|：
+\begin{itemize}
+\item \code|x| 可以被赋值给 \code|T|。
+\item 忽视掉结构体标签（见下文）后，\code|x| 的类型和 \code|T| 具有等价的底层类型。
+\item 忽略掉结构体标签（见下文）后，\code|x| 的类型和 \code|T| 是非定义的类型的指针类型，且其指针基类型拥有等价的底层类型。
+\item \code|x| 的类型和 \code|T| 均为整型或浮点类型。
+\item \code|x| 的类型和 \code|T| 都是复数类型。
+\item  \code|x| 是一个整数或字节切片或符文，且 \code|T| 是一个字符串类型。
+\end{itemize}
+当为了转换而比较结构体类型特征时，结构体标签会被忽视：
+\begin{lstlisting}[style=golang]
+type Person struct {
+	Name    string
+	Address *struct {
+		Street string
+		City   string
+	}
+}
+
+var data *struct {
+	Name    string `json:"name"`
+	Address *struct {
+		Street string `json:"street"`
+		City   string `json:"city"`
+	} `json:"address"`
+}
+
+var person = (*Person)(data)  // ignoring tags, the underlying types are identical
+\end{lstlisting}
+特定规则适用于数值类型之间或数值和字符串类型之间的（非常量）转换。
+这些转换可能会更改 \code|x| 的表示，并造成运行时开销。
+所有其他转换只会更改类型，但不会更改 \code|x| 的表示。
+
+没有语言层级的机制可以支持指针和整数之间转换。包 unsafe 在受限的环境下实现这一功能。
+
+\subsection{数值类型之间的转换}
+对于非常量数值间的转换，适用以下规则：
+\begin{itemize}
+\item 当在整型之间转换时，如果值是一个有符号整数，会进行符扩展至隐式无穷精度，否则使用 0 扩展。
+结果会被截断为结果类型的大小。比如：\code|v := uint16(0x10F0)|，此时 \code|uint32(int8(v)) == 0xFFFFFFF0|。
+这种转换永远会提供一个有效值，不会出现溢出。 
+\item  将一个浮点数转换整数时，小数部分会被舍弃（趋零截断）。
+\item  将整数或浮点数转换为浮点类型，或将复数转换为另一个复数类型，结果值会被归约目标类型精度。
+比如，\code|float32| 类型的变量 \code|x| 的值可以使用超过 IEEE-754 32-bit 数的附加精度来存储，但是 \code|floa32(x)| 表示将 \code|x| 的值归约到 32-bit 精度。相似的， \code|x + 0.1| 可以使用超过 32 bits 精度，但是 \code|float32(x + 0.1)| 不能。
+\end{itemize}
+所有涉及浮点或复数值的非常量转换中，如果结果类型不能表示结果值，转换虽然可以成功，但是结果值依赖于具体实现。
+
+\subsection{与字符串类型的转换}
+\begin{enumerate}
+\item 
+将一个有符或无符整数值转换为一个字符串类型，会提供一个包含 UTF-8 表示的整数的字符串。
+Unicode 编码点有效范围外的值会被转换为 ``\code|\uFFFD|''。
+\begin{lstlisting}[style=golang, numbers=none]
+string('a')       // "a"
+string(-1)        // "\ufffd" == "\xef\xbf\xbd"
+string(0xf8)      // "\u00f8" == "ø" == "\xc3\xb8"
+type MyString string
+MyString(0x65e5)  // "\u65e5" == "日" == "\xe6\x97\xa5"
+\end{lstlisting}
+\item 
+将一个字节切片转换为一个字符串类型会提供一个字符串，其连续字节为切片元素。
+\begin{lstlisting}[style=golang, numbers=none]
+string([]byte{'h', 'e', 'l', 'l', '\xc3', '\xb8'})   // "hellø"
+string([]byte{})                                     // ""
+string([]byte(nil))                                  // ""
+
+type MyBytes []byte
+string(MyBytes{'h', 'e', 'l', 'l', '\xc3', '\xb8'})  // "hellø"
+\end{lstlisting}
+
+\item
+将符文切片转换为一个字符串类型将提供一个独立符文值转换为字符串后相连接的字符串。
+\begin{lstlisting}[style=golang, numbers=none]
+string([]rune{0x767d, 0x9d6c, 0x7fd4})   // "\u767d\u9d6c\u7fd4" == "白鵬翔"
+string([]rune{})                         // ""
+string([]rune(nil))                      // ""
+
+type MyRunes []rune
+string(MyRunes{0x767d, 0x9d6c, 0x7fd4})  // "\u767d\u9d6c\u7fd4" == "白鵬翔"
+\end{lstlisting}
+
+\item
+将一个字符串类型值转换为一个切片类型将提供一个其连续元素为字符串字节的切片。
+\begin{lstlisting}[style=golang, numbers=none]
+[]byte("hellø")   // []byte{'h', 'e', 'l', 'l', '\xc3', '\xb8'}
+[]byte("")        // []byte{}
+
+MyBytes("hellø")  // []byte{'h', 'e', 'l', 'l', '\xc3', '\xb8'}
+\end{lstlisting}
+
+\item
+将一个字符串类型转换为一个符文类型切片将提供一个包含字符串独立 Unicode 编码点的切片。
+\begin{lstlisting}[style=golang, numbers=none]
+[]rune(MyString("白鵬翔"))  // []rune{0x767d, 0x9d6c, 0x7fd4}
+[]rune("")                 // []rune{}
+
+MyRunes("白鵬翔")           // []rune{0x767d, 0x9d6c, 0x7fd4}
+\end{lstlisting}
+\end{enumerate}
+
+\section{常量表达式}
+常量表达式只能包含在在编译时计算的常量操作数。
+
+无类型布尔、数值、和字符串常量只要是合法的相应类型就可以被用作操作数。
+除了移位操作，如果二元运算的操作数是不同种类的无类型常量，结果会使用后出现在列表：整数、符文、浮点、复数种类的无类型常量。
+比如：一个无类型整数常量被一个无类型复数常量除，结果为无类型复数常量
+
+一个常量比较永远会提供一个无类型布尔常量。
+如果常量移位表达式的左操作数是一个无类型常量，结果将为整数常量；
+否则结果为与左操作数相同类型的常量，其必须为整数类型。
+其他应用于无类型常量结果的所有操作符，将导致相同种类的无类型常量（也就是，一个布尔、整数、浮点、复数、或字符串常量）
+\begin{lstlisting}[style=golang]
+const a = 2 + 3.0          // a == 5.0   (untyped floating-point constant)
+const b = 15 / 4           // b == 3     (untyped integer constant)
+const c = 15 / 4.0         // c == 3.75  (untyped floating-point constant)
+const Θ float64 = 3/2      // Θ == 1.0   (type float64, 3/2 is integer division)
+const Π float64 = 3/2.     // Π == 1.5   (type float64, 3/2. is float division)
+const d = 1 << 3.0         // d == 8     (untyped integer constant)
+const e = 1.0 << 3         // e == 8     (untyped integer constant)
+const f = int32(1) << 33   // illegal    (constant 8589934592 overflows int32)
+const g = float64(2) >> 1  // illegal    (float64(2) is a typed floating-point 
+						   //		 	 constant)
+const h = "foo" > "bar"    // h == true  (untyped boolean constant)
+const j = true             // j == true  (untyped boolean constant)
+const k = 'w' + 1          // k == 'x'   (untyped rune constant)
+const l = "hi"             // l == "hi"  (untyped string constant)
+const m = string(k)        // m == "x"   (type string)
+const Σ = 1 - 0.707i       //            (untyped complex constant)
+const Δ = Σ + 2.0e-4       //            (untyped complex constant)
+const Φ = iota*1i - 1/1i   //            (untyped complex constant)
+\end{lstlisting}
+
+对无类型整数、符文或浮点常量使用内置函数 \code|complex| 会提供一个无类型复数常量。
+\begin{lstlisting}[style=golang]
+const ic = complex(0, c)   // ic == 3.75i  (untyped complex constant)
+const iΘ = complex(0, Θ)   // iΘ == 1i     (type complex128)
+\end{lstlisting}
+
+常量表达式永远被真实的计算；中间值和常量可能会要求比语言中预声明的类型更高的有效精度。
+下面时合法的声明：
+\begin{lstlisting}[style=golang]
+const Huge = 1 << 100			// Huge == 1267650600228229401496703205376  
+								// (untyped integer constant)
+const Four int8 = Huge >> 98  	// Four == 4 (type int8)
+\end{lstlisting}
+
+一个常量除法或余数运算的除数不能为 0：
+\begin{lstlisting}[style=golang]
+3.14 / 0.0   // illegal: division by zero
+\end{lstlisting}
+
+有类型常量的值必须能被其类型精确的可表示。下列常量表达式时非法的：
+\begin{lstlisting}[style=golang]
+uint(-1)     // -1 cannot be represented as a uint
+int(3.14)    // 3.14 cannot be represented as an int
+int64(Huge)  // 1267650600228229401496703205376 cannot be represented as an int64
+Four * 300   // operand 300 cannot be represented as an int8 (type of Four)
+Four * 100   // product 400 cannot be represented as an int8 (type of Four)
+\end{lstlisting}
+
+非常量值使用一元按位补码运算符 \code|^| 中使用的掩码需满足规则：无符号常量的掩码全为 1，有符号且无类型常量则为 -1。
+\begin{lstlisting}[style=golang]
+^1         // untyped integer constant, equal to -2
+uint8(^1)  // illegal: same as uint8(-2), -2 cannot be represented as a uint8
+^uint8(1)  // typed uint8 constant, same as 0xFF ^ uint8(1) = uint8(0xFE)
+int8(^1)   // same as int8(-2)
+^int8(1)   // same as -1 ^ int8(1) = -2
+\end{lstlisting}
+
+受制于实现：比那一起在计算无类型浮点或复数常量表达式时可能会进行四舍五入；详情可以查看常量章节中的实现限制。
+这种四舍五入会导致浮点常量表达式在整数上下文环境中无效，即便可以使用无穷精度进行计算时有效，反之亦然。
+
+\section{计算顺序}
+在包层级上，初始化之间的依赖决定了变量声明中各初始化表达式的计算顺序。
+否则，在计算表达式、赋值、返回语句、所有的函数调用、方法调用以及通讯运算符的操作数会从词法上的从左向右的顺序计算。
+
+比如，在以下（function-local）赋值中
+\begin{lstlisting}[style=golang]
+y[f()], ok = g(h(), i()+x[j()], <-c), k()
+\end{lstlisting}
+函数调用和通讯的发生顺序为：\code|f(), h(), i(), j(), <-c, g(), k()|。
+但是这些事件的顺序相对于 \code|x| 的所有和计算以及 \code|y| 的计算是未指明的。
+\begin{lstlisting}[style=golang]
+a := 1
+f := func() int { a++; return a }
+x := []int{a, f()}				// x may be [1, 2] or [2, 2]:
+								// evaluation order between a and f() 
+								// is not specified
+m := map[int]int{a: 1, a: 2}	// m may be {2: 1} or {2: 2}: 
+								// evaluation order between the two map assignments 
+								// is not specified
+n := map[int]int{a: f()}		// n may be {2: 3} or {3: 3}: 
+								// evaluation order between the key and the value 
+								// is not specified
+\end{lstlisting}
+
+在包层级上，初始化的依赖会重写单个初始化表达式的从左向右计算规则，而不是每一个表达式中的操作数。
+\begin{lstlisting}[style=golang]
+var a, b, c = f() + v(), g(), sqr(u()) + v()
+
+func f() int        { return c }
+func g() int        { return a }
+func sqr(x int) int { return x*x }
+
+// functions u and v are independent of all other variables and functions
+\end{lstlisting}
+函数调用的顺序为 \code|u(), sqr(), v(), f(), v(), g()|。
+
+单个表达式中的浮点运算符会根据运算符的结合性。
+显式的圆括弧会通过重写默认结合性来影响计算。
+表达式 \code|x + (y + z)| 中的 \code|y + z| 会在加上 \code|x| 之前计算。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

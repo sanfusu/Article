@@ -1,0 +1,104 @@
+% !TeX root = Main.tex
+\chapter{包}
+Go 程序由链接在一起的包组成。
+一个包则由一个或多个声明了属于包的常量、类型、变量和函数的源文件，这些声明物可以被相同包内的所有文件访问。
+这些元素可以被导出，并在其他包内使用。
+
+\section{源文件组织}
+每一个源文件由定义了其所属的包的包子部组成，后面跟上可能为空集的表示哪些包期望使用的导入声明，在跟上可能为空集的函数、类型、变量和常量的声明。
+\begin{EBNF}
+SourceFile       = PackageClause ";" { ImportDecl ";" } { TopLevelDecl ";" } .
+\end{EBNF}
+
+\section{包子句}
+一个包子句作为每一个源文件的开始，定义了该文件所属的包。
+\begin{EBNF}
+PackageClause  = "package" PackageName .
+PackageName    = identifier .
+\end{EBNF}
+其中 PackageName 不能为空白标识符。
+\begin{golang}
+package math
+\end{golang}
+
+一组共享相同 PackageName 的文件形成了一个包的实现。
+具体实现可能会要求一个包的所有源文件位于相同的目录下。
+
+\section{导入声明}
+一个导入声明表面源文件中包含依赖于导入的包的功能的声明，并使之能够访问该包中导出的标识符。
+导入会命名一个用来访问的标识符（PackageName）以及表示被导入的包的 ImportPath。
+\begin{EBNF}
+ImportDecl       = "import" ( ImportSpec | "(" { ImportSpec ";" } ")" ) .
+ImportSpec       = [ "." | PackageName ] ImportPath .
+ImportPath       = string_lit .
+\end{EBNF}
+
+PackageName 被用在限定标识符中，用来访问导入的源文件中导出的标识符。
+PackageName 需要声明在文件块中。
+如果忽略 PackageName，则默认为导入的包中的包子句中使用的标识符。
+如果出现的是显式的句点（.）而不是一个名字，则被导入的包的包块处声明导出的标识符将声明在导入源文件的文件块中，并且禁止使用限定符来访问。
+
+ImportPath 的解释依赖于实现，但一般为被编译的包的文件全名的子字符串，并可能使用相对于已安装的包的仓库的相对路径。
+
+受制于实现：一个编译器可能限制 ImportPath 为非空字符串并只能使用属于 Unicode 的 L、M、N、P 和 S 通用类别（无空格的图形字符）的字符，同时排除字符 \code@!"#$%&'()*,:;<=>?[\]^`{|}@ 
+和 Unicode 替换字符 U+FFFD %$
+
+假定我们有已编译的包，包含包子句 \code|package math|，其中导出函数 \code|Sin|，并将已编译的包安装在``\code|lib/math|''。
+下表阐述了 \code|Sin| 在各种类型的导入声明后，如何在文件中进行访问。
+\begin{table}[H]
+\centering
+\begin{tabular}{l|l}
+导入声明 & Sin 的本地名 \\
+\hline
+\code|import   "lib/math"|      &   \code|math.Sin| \\
+\code|import m "lib/math"|   &      \code|m.Sin| \\
+\code|import . "lib/math"|     &    \code|Sin| \\
+\end{tabular}
+\end{table}
+
+一个导入声明声明了导入和被导入的包之间的依赖关系。
+直接或间接的导入包自身，或直接导入一个包而不使用其中任何导出的标识符都是非法的。
+如果仅是为了导入包的副作用（初始化），可以使用空白标识符作为显式的包名。
+
+\section{包示例}
+下面是一个实现了并发素数筛选的完整 Go 包。
+\begin{golang}
+package main
+
+import "fmt"
+
+// Send the sequence 2, 3, 4, … to channel 'ch'.
+func generate(ch chan<- int) {
+	for i := 2; ; i++ {
+		ch <- i  // Send 'i' to channel 'ch'.
+	}
+}
+
+// Copy the values from channel 'src' to channel 'dst',
+// removing those divisible by 'prime'.
+func filter(src <-chan int, dst chan<- int, prime int) {
+	for i := range src {  // Loop over values received from 'src'.
+		if i%prime != 0 {
+			dst <- i  // Send 'i' to channel 'dst'.
+		}
+	}
+}
+
+// The prime sieve: Daisy-chain filter processes together.
+func sieve() {
+	ch := make(chan int)  // Create a new channel.
+	go generate(ch)       // Start generate() as a subprocess.
+	for {
+		prime := <-ch
+		fmt.Print(prime, "\n")
+		ch1 := make(chan int)
+		go filter(ch, ch1, prime)
+		ch = ch1
+	}
+}
+
+func main() {
+	sieve()
+}
+\end{golang}
+

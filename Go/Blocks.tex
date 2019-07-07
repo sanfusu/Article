@@ -1,0 +1,17 @@
+% !TeX root = Main.tex
+\chapter{块}
+一个块域可以是匹配的花括弧内连续的空声明和语句序列。
+\begin{lstlisting}[style=EBNF]
+Block = "{" StatementList "}" .
+StatementList = { Statement ";" } .
+\end{lstlisting}
+
+除了源代码中显式的块域，还有以下隐式的块域：
+\begin{enumerate}
+\item 包含所有 Go 源文本的全局块。
+\item 每一个包中都有一个包含该包中所有代码文本的 package block
+\item 每一个文件都有一个文件块包含该文件内的所有 Go 源文本。
+\item 每一个 ``if''，``for''，``switch'' 语句都有一个自己的隐式块。
+\item  ``switch'' 或 ``select'' 语句中的每一个子句都表现为一个隐式块。
+\end{enumerate}
+块可以嵌套并会影响作用域。

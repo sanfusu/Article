@@ -1,0 +1,433 @@
+% !TeX root=../Main.tex
+\chapter{类型}
+一个类型决定了一组值和特定于这些值的操作以及方法。
+一个类型可以通过类型名来表示，也可以通过\emph{类型字面量}来指定。
+类型字面量从现有类型中组成一个类型。
+
+\begin{lstlisting}[style=EBNF]
+Type      = TypeName | TypeLit | "(" Type ")" .
+TypeName  = identifier | QualifiedIdent .
+TypeLit   = ArrayType | StructType | PointerType | FunctionType | InterfaceType |
+			SliceType | MapType | ChannelType .
+\end{lstlisting}
+
+本语言预先声明了一些特定的类型名。
+其余由类型声明来引入。
+\emph{复合类型}---数组，结构体，指针，函数，接口，切片，映射，通道类型 --- 可以通过类型字面量构造。
+
+每一个类型 \lstinline|T| 都有一个底层类型：如果 \lstinline|T| 是预声明的布尔，数值，字符串类型或类型字面量中的一个，则相应的底层类型是其自身。
+否则，\lstinline|T| 的底层类型是 \lstinline|T| 在类型声明中引用到的类型的底层类型。
+\begin{lstlisting}[style=golang]
+type (
+	A1 = string
+	A2 = A1
+)
+
+type (
+	B1 string
+	B2 B1
+	B3 []B1
+	B4 B3
+)
+\end{lstlisting}
+\lstinline|string, A1, A2, B1| 和 \lstinline|B2| 的底层类型是 \lstinline|string|。
+类型 \lstinline|[]B1, B3|和 \lstinline|B4| 的底层类型是 \lstinline|[]B1|。
+
+
+\section{方法集}
+一个类型可能会有与其相关联的方法集。
+一个接口类型的方法集是其接口。
+其他任何类型 \lstinline|T| 的方法集由所有使用类型 \lstinline|T| 作为接收器声明的方法组成。
+指针类型 \lstinline|*T| 相应的方法集为所有使用接收器 \lstinline|*T| 或 \lstinline|T| 声明的方法的集合（也就是说，包含 \lstinline|T| 的方法集）。
+此外，如\hyperref[sec:struct-type]{结构体类型}小节中所说，这些规则同样适用于包含嵌入字段的结构体。
+任何其他类型具有空方法集。
+在一个方法集中，每一个方法必须有一个独一无二的非空方法名。
+
+一个类型的方法集决定了该类型实现的接口和可通过该类型接收器所调用的方法。
+
+\section{布尔类型}
+一个布尔类型代表通过预声明的常量 \lstinline|true| 和 \lstinline|false| 表示的布尔真值集合。
+预声明的布尔类型为 \lstinline|bool|；这是一个定义的类型。
+
+\section{数值类型}
+一个数值类型表示整数或浮点值的集合。
+预声明的依赖于体系结构的数值类型为：
+\begin{description}[leftmargin=4\parindent,style=sameline] % @FIXME 使用 description 重写这部分格式。
+\item[uint8]	   the set of all unsigned  8-bit integers (0 to 255)
+\item[uint16]      the set of all unsigned 16-bit integers (0 to 65535)
+\item[uint32]      the set of all unsigned 32-bit integers (0 to 4294967295)
+\item[uint64]      the set of all unsigned 64-bit integers (0 to 18446744073709551615)
+\item[int8]        the set of all signed  8-bit integers (-128 to 127)
+\item[int16]       the set of all signed 16-bit integers (-32768 to 32767)
+\item[int32]       the set of all signed 32-bit integers (-2147483648 to 2147483647)
+\item[int64]       the set of all signed 64-bit integers (-9223372036854775808 to \\ 9223372036854775807)
+\item[float32]     the set of all IEEE-754 32-bit floating-point numbers
+\item[float64]     the set of all IEEE-754 64-bit floating-point numbers
+
+\item[complex64]   the set of all complex numbers with float32 real and imaginary parts
+\item[complex128]  the set of all complex numbers with float64 real and imaginary parts
+
+\item[byte]        alias for uint8
+\item[rune]        alias for int32
+\end{description}
+n-bit 整数的值具有 n 个 bit 位，并使用二的补码算术表示。
+
+一些预声明的数值类型具有特定于实现的大小：
+\begin{description}[font=\ttfamily\bfseries, style=sameline, leftmargin=4\parindent, labelindent=\parindent]
+\item[uint] 32 bit 或 64 bit
+\item[int] 和 uint 具有相同大小
+\item[uintptr] 足以存储一个未释义的指针值的所有 bit 的无符号整型。
+\end{description}
+为了避免移植性问题，所有的数值类型都是定义的类型，也就是各不相同，但除了 \lstinline|byte| 是 \lstinline|uint8| 的别名，以及 \lstinline|rune| 是 \lstinline|int32| 的别名。
+如果一个表达式或赋值中混合了不同的数值类型，则需要进行转换。
+比如 \lstinline|int32| 和 \lstinline|int| 尽管在特定体系结构中具有相同大小，但并不是相同类型。
+
+\section{字符串类型}
+一个字符串类型代表字符串值的集合。
+一个字符串是一个字节序列（可能为空序列）。
+字符串是不可修改的：一旦创建，便无法改变字符串的内容。
+预声明的字符串类型为 \lstinline|string|，为定义的类型。
+
+字符串 \lstinline|s| 的长度可以通过内置函数 \lstinline|len| 来求得。
+如果字符串是常量，则长度会在编译期间计算得出。
+字符串中的字节可通过 0 到 \lstinline|len(s)-1| 的整型索引访问。
+对字符串中的字节元素取地址是非法的；如果 \lstinline|s[i]| 是字符串的第 \lstinline|i| 个字节，则 \lstinline|&[si]| 是无效的。
+
+\section{数组类型}
+一个数组一个编号的单类型元素（被称为元素类型）序列。
+元素的数量被称为长度，并且永远不为负。
+\begin{lstlisting}[style=EBNF]
+ArrayType   = "[" ArrayLength "]" ElementType .
+ArrayLength = Expression .
+ElementType = Type .
+\end{lstlisting}
+长度作为数组类型的一部分，值必须为类型 \lstinline|int| 的非负常量。
+数组 \lstinline|a| 的长度可以通过内置函数 \lstinline|len| 计算得出。
+数组元素可以通过 0 到 \lstinline|len(a)-1| 的整型下标寻址。
+数组类型永远是一维的，但可以组合形成多维类型。
+\begin{lstlisting}[style=golang]
+[32]byte
+[2*N] struct { x, y int32 }
+[1000]*float64
+[3][5]int
+[2][2][2]float64  // same as [2]([2]([2]float64))
+\end{lstlisting}
+
+
+\section{切片类型}
+切片是用来提供编号的序列元素访问的底层元素中连续片段的描述符。
+一个切片类型表示其元素类型数组的所有切片的集合。
+未初始化切片的值是 \lstinline|nil|。
+\begin{lstlisting}[style=EBNF]
+SliceType = "[" "]" ElementType .
+\end{lstlisting}
+和数组类似，切片是可索引的并且具有长度。
+切片 \lstinline|s| 的长度可以通过内置函数 \lstinline|len| 来计算得出；和数组不同的是，可以在执行期间改变。
+元素可以通过 0 到 \lstinline|len(s)-1| 的整型下标寻址。
+一个给定元素的切片索引可能会小于底层数组中相同元素的索引。
+
+一个切片，一旦初始化后，便永远的和保存其元素的底层数组相关联。
+一个切片因此会和其数组以及相同数组的切片共享存储；相反，不同的数组永远具有不同的存储。
+
+底层数组可能会超过切片的结尾。
+切片的容量为该区间的度量：切片的长度加上数组超过切片的长度。
+长度为其容量的切片可以通过从原有切片中重新划分。% @FIXME 翻译需要斟酌
+切片 \lstinline|a| 的容量可以通过内置函数 \lstinline|cap(a)| 计算得出。
+
+通过内置函数 \lstinline|make| 创建一个给定的初始化过的切片值，该函数需切片类型和指定长度的参数以及可选的容量参数。
+通过 \lstinline|make| 创建的切片永远会申请一个新的隐藏的数组，返回的切片将会指向这个数组。
+也就是说，执行
+\begin{lstlisting}[style=golang]
+make([]T, length, capacity)
+\end{lstlisting}
+会和申请一个数组并分片提供一样的切片，因此下面两个表达式是等价的：
+\begin{lstlisting}
+make([]int, 50, 100)
+new([100]int)[0:50]
+\end{lstlisting}
+和数组一样，切片永远是一维的，但是可以组合成更高维的对象。
+使用数组的数组是，内部数组永远具有相同的长度；但是在使用切片的切片时（或者切片的数组），内部长度可以动态的变化。
+此外，内部切片必须独立的初始化。
+
+\section{结构体类型}\label{sec:struct-type}
+一个结构体是一个被称为字段的命名元素序列，每一个元素都有一个名字和类型。
+字段名既可以显式的指明（标识符列表），也可以隐式的指明（嵌入字段）。
+在结构体中，非空白字段名必须独一无二的。
+\begin{lstlisting}[style=EBNF]
+StructType    = "struct" "{" { FieldDecl ";" } "}" .
+FieldDecl     = (IdentifierList Type | EmbeddedField) [ Tag ] .
+EmbeddedField = [ "*" ] TypeName .
+Tag           = string_lit .
+\end{lstlisting}
+
+\begin{lstlisting}[style=golang]
+// An empty struct.
+struct {}
+
+// A struct with 6 fields.
+struct {
+	x, y int
+	u float32
+	_ float32  // padding
+	A *[]int
+	F func()
+}
+\end{lstlisting}
+一个字段使用一个类型进行声明但没有显式的字段名则称为\emph{嵌入的字段}。
+一个嵌入的字段必须指定为类型名 \lstinline|T| 或者为一个指向非接口类型的指针 \lstinline|*T|，
+并且 \lstinline|T| 本身不能是一个指针类型。
+无限制的类型名可以作为字段名。
+\begin{lstlisting}[style=golang]
+// A struct with four embedded fields of types T1, *T2, P.T3 and *P.T4
+struct {
+	T1        // field name is T1
+	*T2       // field name is T2
+	P.T3      // field name is T3
+	*P.T4     // field name is T4
+	x, y int  // field names are x and y
+}
+\end{lstlisting}
+下面声明是非法的，应为字段名在结构体类型中必须是独一无二的。
+\begin{lstlisting}[style=golang]
+struct {
+	T     // conflicts with embedded field *T and *P.T
+	*T    // conflicts with embedded field T and *P.T
+	*P.T  // conflicts with embedded field T and *T
+}
+\end{lstlisting}
+如果 \lstinline|x.f| 可以合法的表示一个字段或者方法 \lstinline|f|，而字段或方法 \lstinline|f| 是结构体 \lstinline|x| 中的嵌入字段，则称之为被\emph{提升}。
+
+除了不能再结构体复合字面量中作为字段名外，提升的字段和普通字段一样。
+
+给定一个结构体类型 \lstinline|S| 和定义的类型 \lstinline|T|，以下情况中，提升的方法会被包含在结构体的方法集中：
+\begin{itemize}
+\item 如果 \lstinline|S| 包含嵌入的字段 \lstinline|T|，则 \lstinline|S| 和 \lstinline|*S| d的方法集都包含接收器为 \lstinline|T| 的提升方法。\lstinline|*S| 的方法集中也会包含带有接收器 \lstinline|*T| 的提升方法。
+\item  如果 \lstinline|S| 包含嵌入字段 \lstinline|*T|，则 \lstinline|S| 和 \lstinline|*S| 同时包含带有接收器 \lstinline|T| 或 \lstinline|*T| 的提升方法。
+\end{itemize}
+
+一个字段声明后面可以跟上可选的字符串字面量\emph{标签}，该标签将成为相应字段声明中所有字段的属性(attribute)。
+一个空标签字符串等价于一个缺省标签。
+一个标签可以通过反射接口可见，并参与结构体的类型识别，其他情况下会被标签忽略掉。
+\begin{lstlisting}[style=golang]
+struct {
+	x, y float64 ""  // an empty tag string is like an absent tag
+	name string  "any string is permitted as a tag"
+	_    [4]byte "ceci n'est pas un champ de structure"
+}
+
+// A struct corresponding to a TimeStamp protocol buffer.
+// The tag strings define the protocol buffer field numbers;
+// they follow the convention outlined by the reflect package.
+struct {
+	microsec  uint64 `protobuf:"1"`
+	serverIP6 uint64 `protobuf:"2"`
+}
+\end{lstlisting}
+
+
+\section{指针类型}
+一个指针类型表示指向给定类型变量的所有指针集合，该给定类型被称为指针的\emph{基类型}。
+未初始化指针的值为 \lstinline|nil|
+\begin{lstlisting}[style=EBNF]
+PointerType = "*" BaseType .
+BaseType    = Type .
+\end{lstlisting}
+
+\begin{lstlisting}[style=golang]
+*Point
+*[4]int
+\end{lstlisting}
+
+\section{函数类型}
+一个函数类型表示所有带有相同类型的参数和结果的函数。
+未初始化的函数类型变量的值为 \lstinline|nil|。
+\begin{lstlisting}[style=EBNF]
+FunctionType   = "func" Signature .
+Signature      = Parameters [ Result ] .
+Result         = Parameters | Type .
+Parameters     = "(" [ ParameterList [ "," ] ] ")" .
+ParameterList  = ParameterDecl { "," ParameterDecl } .
+ParameterDecl  = [ IdentifierList ] [ "..." ] Type .
+\end{lstlisting}
+在参数列表或结果中，参数名和结果民（标识符列表）必须全部呈现或者全部省略。
+如果呈现，每一个名字代表一个特定类型的参数或结果，签字中所有非空白名必须是独一无二的。
+如果缺省，每一个类型代表给类型的一个参数或结果。
+参数和结果列表必须使用圆括弧包含，除非只有一个未命名结果。
+
+函数签字里面最后的输入参数类型可以有一个 \dots{} 前缀。
+具有这种参数的函数被称为可变参数函数\footnote{variadic}，这种参数可以视为 0 个或多个参数。
+\begin{lstlisting}[style=golang]
+func()
+func(x int) int
+func(a, _ int, z float32) bool
+func(a, b int, z float32) (bool)
+func(prefix string, values ...int)
+func(a, b int, z float64, opt ...interface{}) (success bool)
+func(int, int, float64) (float64, *[]int)
+func(n int) func(p *T)
+\end{lstlisting}
+
+
+\section{接口类型}
+一个接口类型表示一个被称为接口的方法集。
+一个接口类型变量可以存储任何方法集为接口超集的类型的变量。
+这种类型被称为\lstinline|接口的实现|。
+未初始化的接口类型变量的值为 \lstinline|nil|。
+\begin{lstlisting}[style=EBNF]
+InterfaceType      = "interface" "{" { MethodSpec ";" } "}" .
+MethodSpec         = MethodName Signature | InterfaceTypeName .
+MethodName         = identifier .
+InterfaceTypeName  = TypeName .
+\end{lstlisting}
+
+一个接口类型的方法集中，每一个方法必须具有独一无二的非空白名。
+\begin{lstlisting}[style=golang]
+// A simple File interface
+interface {
+	Read(b Buffer) bool
+	Write(b Buffer) bool
+	Close()
+}
+\end{lstlisting}
+
+可以有多个类型实现同一个接口。比如，两个类型 \lstinline|S1| 和 \lstinline|S2| 可以具有方法集
+\begin{lstlisting}[style=golang]
+func (p T) Read(b Buffer) bool { return … }
+func (p T) Write(b Buffer) bool { return … }
+func (p T) Close() { … }
+\end{lstlisting}
+
+（其中 \lstinline|T| 既可以代表 \lstinline|S1| 也可以代表 \lstinline|S2|），
+同时被 \lstinline|S1| 和 \lstinline|S2| 实现，\lstinline|S1| 和 \lstinline|S2| 也可以有其余（共享）的方法。
+
+一个类型可以实现任何由其方法子集组成的接口，因此一个类型可以实现几个不同的接口。
+比如，所有的类型都会实现一个空接口。
+\begin{lstlisting}[style=golang]
+interface{}
+\end{lstlisting}
+
+于此类似，下面出现在一个类型声明中的接口说明，定义了一个名为 \lstinline|Locker| 的接口：
+\begin{lstlisting}[style=golang]
+type Locker interface {
+	Lock()
+	Unlock()
+}
+\end{lstlisting}
+
+如果 \lstinline|S1| 和 \lstinline|S2| 也实现了
+\begin{lstlisting}[style=golang]
+func (p T) Lock() { … }
+func (p T) Unlock() { … }
+\end{lstlisting}
+则他们在实现 \lstinline|File| 接口的同时实现了 \lstinline|Locker| 接口。
+
+一个接口 \lstinline|T| 可以使用名为 \lstinline|E| 的接口类型来代替方法说明。
+这称为将接口 \lstinline|E| 嵌入到 \lstinline|T| 中，这种方式会将 \lstinline|E| 的所有方法（包括导出和未导出的）加入到接口 \lstinline|T| 中。
+\begin{lstlisting}[style=golang]
+type ReadWriter interface {
+	Read(b Buffer) bool
+	Write(b Buffer) bool
+}
+
+type File interface {
+	ReadWriter  // same as adding the methods of ReadWriter
+	Locker      // same as adding the methods of Locker
+	Close()
+}
+
+type LockedFile interface {
+	Locker
+	File        // illegal: Lock, Unlock not unique
+	Lock()      // illegal: Lock not unique
+}
+\end{lstlisting}
+
+一个接口类型 \lstinline|T| 无法递归的嵌入自身或者任何嵌入 \lstinline|T| 的接口。
+\begin{lstlisting}[style=golang]
+// illegal: Bad cannot embed itself
+type Bad interface {
+	Bad
+}
+
+// illegal: Bad1 cannot embed itself using Bad2
+type Bad1 interface {
+	Bad2
+}
+type Bad2 interface {
+	Bad1
+}
+\end{lstlisting}
+
+\section{图类型}
+一个图是一组无序的单类型元素；该类型被称为元素类型。
+可以通过其他类型的唯一键来索引，即键类型。
+未初始化的图的值为 \lstinline|nil|。
+\begin{lstlisting}[style=EBNF]
+MapType     = "map" "[" KeyType "]" ElementType .
+KeyType     = Type .
+\end{lstlisting}
+
+必须为 key 类型操作数完全定义比较操作符 \lstinline|==| 和 \lstinline|!=|；
+因此 key 类型不能为函数、图、或者切片。
+如果 key 类型是一个接口类型，必须为这些动态 key 值定义比较操作符；
+失败将会导致 run-time panic。
+\begin{lstlisting}[style=golang]
+map[string]int
+map[*T]struct{ x, y float64 }
+map[string]interface{}
+\end{lstlisting}
+
+map 元素的数量被称为长度。
+对于 map \lstinline|m|，可以通过内置函数 \lstinline|len| 来获取长度，并可能会在执行时更改。
+元素可以在执行时使用赋值来添加，并且通过索引表达式来获取；他们可以通过内置函数 \lstinline|delete| 来删除。
+\begin{lstlisting}[style=golang]
+make(map[string]int)
+make(map[string]int, 100)
+\end{lstlisting}
+初始容量并不会限制 map 的大小：map 会根据其存储的元素数量来增加大小。一个 \lstinline|nil| map
+等价于一个空 map，但无法向其中添加元素。
+
+\section{通道类型}
+一个通道通过使用发送和接受特定元素类型的值为并发执行函数提供通讯机制。
+未初始化的通道的值为 \lstinline|nil|
+\begin{lstlisting}[style=EBNF]
+ChannelType = ( "chan" | "chan" "<-" | "<-" "chan" ) ElementType .
+\end{lstlisting}
+
+可选的 \lstinline|<-| 运算符表好似通道方向，发送还是接收。
+如果没有给定方向，则通道是双向的。
+一个通道可以通过转换或赋值限制为只用作发送或者只用作接收。
+\begin{lstlisting}[style=golang]
+chan T          // can be used to send and receive values of type T
+chan<- float64  // can only be used to send float64s
+<-chan int      // can only be used to receive ints
+\end{lstlisting}
+
+\lstinline|<-| 会和最左边的 \lstinline|chan| 关联：
+\begin{lstlisting}[style=golang]
+chan<- chan int    // same as chan<- (chan int)
+chan<- <-chan int  // same as chan<- (<-chan int)
+<-chan <-chan int  // same as <-chan (<-chan int)
+chan (<-chan int)
+\end{lstlisting}
+
+一个新的，且初始化过的通道值可以通过内置函数 \lstinline|make| 来创建，
+\lstinline|make| 函数需要通道类型和可选的容量作为参数：
+\begin{lstlisting}[style=golang]
+make(chan int, 100)
+\end{lstlisting}
+
+容量即元素数量，用来设置通道中的缓冲区大小。如果容量是零或者缺省，则通道无缓冲并且仅当接收器和发送器都准备好时，才会成功。
+若有缓冲区，则会在发送时未满，接收时未空，才会无阻塞的通讯成功。
+一个 \lstinline|nil| 通道永远不会处于准备通讯状态。
+
+通道可以使用内置函数 \lstinline|close| 关闭。
+接收运算符的多值赋值形式可以用来报告，接受的值是否在通道关闭之前发送。
+
+单通道可能会被用在发送语句，接收操作，和被任意数量的无跟多的同步操作的 goroutinges 调用 \lstinline|cap| 和 \lstinline|len| 内置函数。
+通道的表现形式为先进先出的队列。
+比如一个 goroutine 向一个通道发送值，而第二个 goroutine 用于接收值，那么这些值会按照发送的顺序接收。
+
+
+
+

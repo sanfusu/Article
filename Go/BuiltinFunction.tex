@@ -1,0 +1,257 @@
+% !TeX root = Main.tex
+\chapter{内置函数}
+内置函数是预声明的。
+可以和其他任何函数一样调用，但其中部分内置函数使用一个类型而不是表达式来作为其第一个参数。
+
+内置函数没有标准 Go 类型，因此只能出现在调用表达式中；他们不能用作函数值。
+
+\section{Close}
+对于通道 \code|c|，内置函数 \code|close(c)|  表示不会有更多的值会被发送到通道里。
+如果 \code|c| 是一个只接收通道，则会发送错误。
+向一个已关闭的通道或关闭一个已关闭的通道会导致运行时崩坏。
+关闭 \code|nil| 通道会导致运行时崩坏。
+调用 \code|close| 之后，以及任何之前发送的值已经被接收之后，接收操作会无阻塞的返回一个 0 值。
+不论通道是否关闭，多值接收操作会返回带有指示的接收值。
+
+\section{长度和容量}
+内置函数 \code|len| 以及 \code|cap| 使用不同类型作为参数，并返回 \code|int| 类型的结果。
+实现要保证结果永远能够纳入 \code|int| 型。
+\begin{table}[h]
+\centering
+\begin{tabular}{lll}
+调用 & 参数类型 & 结果 \\ \hline
+\multirow{5}{*}{\code|len(s)|} & \code|string| & 字符串字节单位长度\\
+&\code|[n]T, *[n]T|& 数组长度，等于 n \\
+&\code|[]T| & 切片长度 \\
+&\code|map[K]T| & 映射长度（已定义的 key 的数量）\\
+&\code|chan T| & 通道缓冲中排队的元素数量 \\ \hline
+\multirow{3}{*}{\code|cap(s)|} & \code|[n]T, *[n]T|&数组长度，等于 n \\ 
+& \code|[]T| & 切片容量 \\
+& \code|chan T| & 通道缓冲容量\\
+\end{tabular}
+\end{table}
+
+切片的容量为底层数组申请的元素数量。任何时候都具有关系：$0 \leq len(s) \leq cap(s)$。
+值为 \code|nil| 的切片、映射或通道的长度为 0。
+一个 值为\code|nil| 的切片或通道的容量为 0。
+
+如果 \code|s| 是一个字符串常量，表达式 \code|len(s)| 则为常量。
+如果类型 \code|s| 是一个数组或数组指针并且表达式 \code|s| 不包含通道接收或（非常量）函数调用，表达式 \code|len(s)| 和 \code|cap(s)| 则为常量。
+否则，\code|len| 和 \code|cap| 的调用是非常量的，并且会计算 \code|s|。
+\begin{golang}
+const (
+	c1 = imag(2i)                    // imag(2i) = 2.0 is a constant
+	c2 = len([10]float64{2})         // [10]float64{2} contains no function calls
+	c3 = len([10]float64{c1})        // [10]float64{c1} contains no function calls
+	c4 = len([10]float64{imag(2i)})  // imag(2i) is a constant and no function call is issued
+	c5 = len([10]float64{imag(z)})   // invalid: imag(z) is a (non-constant) function call
+)
+var z complex128
+\end{golang}
+
+\section{申请}
+内置函数 \code|new| 使用类型参数 \code|T| 来为该类型的变量申请运行时存储，并且返回一个指向该存储的 \code|*T|  类型的值。
+变量会和初始化值章节中一样初始化。
+\begin{golang}
+new(T)
+\end{golang}
+
+比如：
+\begin{golang}
+type S struct { a int; b float64 }
+new(S)
+\end{golang}
+会为类型 \code|S| 的变量申请存储，初始化（\code|a=0, b=0.0|），并返回包含该位置地址，类型为 \code|*S| 的值。
+
+\section{创建切片，映射和通道}
+内置函数 \code|make| 使用类型 \code|T| 作为参数，该类型必须为切片、映射或通道类型，后面可以追加特定于类型的表达式列表。
+\code|make| 函数将返回类型 \code|T| （非 \code|*T|）的值。
+内存会按照初始值章节中描述的方式初始化。
+\begin{table}[h]
+\centering
+\begin{tabular}{lll}
+调用 & 类型 \code|T| & 结果 \\ \hline
+\code|make(T, n)| & 切片 & 类型为 \code|T|，长度为 \code|n| 且容量为 \code|n| 的切片 \\
+\code|make(T, n, m)| & 切片 & 类型为 \code|T|，长度为 \code|n| 且容量为 \code|m| 的切片 \\
+&&\\
+\code|make(T)| & 映射 & 类型为 \code|T| 的映射 \\
+\code|make(T, n)| & 映射 & 初始空间约为 \code|n| 个元素的类型 \code|T| 的映射 \\
+&&\\
+\code|make(T)| & 通道 & 无缓冲类型为 \code|T| 的通道 \\
+\code|make(T, n)| & 通道 & 类型为 \code|T| 的有缓冲通道，缓冲大小为 \code|n| \\
+\end{tabular}
+\end{table}
+
+每一个尺寸参数 \code|n| 和 \code|m| 必须是一个整数类型或无类型常量。
+一个常量尺寸参数必须是非负的，并可以表示为一个 \code|int| 类型的值；如果是无类型常量，则给定类型为 \code|int|。
+如果 \code|n| 和 \code|m| 都是常量，则 \code|n| 必须不大于 \code|m|。
+如果运行时 \code|n| 是负数或比 \code|m| 大，则会导致运行时崩溃。
+\begin{golang}
+s := make([]int, 10, 100)       // slice with len(s) == 10, cap(s) == 100
+s := make([]int, 1e3)           // slice with len(s) == cap(s) == 1000
+s := make([]int, 1<<63)         // illegal: len(s) is not representable by a value of type int
+s := make([]int, 10, 0)         // illegal: len(s) > cap(s)
+c := make(chan int, 10)         // channel with a buffer size of 10
+m := make(map[string]int, 100)  // map with initial space for approximately 100 elements
+\end{golang}
+使用用映射类型和大小 \code|n| 来调用 \code|make| 以创建一个带有 \code|n| 个映射元素初始化空间的映射。
+更精确的行为依赖于实现。
+
+\section{追加以及拷贝切片}
+内置函数 \code|append| 和 \code|copy| 可以辅助常规切片操作。
+两个函数，不管被参数引用的内存是否重叠，结果都是独立的。
+
+可变参数函数 \code|append| 追加零个或多个值 \code|x| 到一个类型为 \code|S| 的变量 \code|s| 中，其中 \code|S| 必须是切片类型，并且返回的结果也必须为类型 \code|S|。
+传递给类型参数类型为 \code|...T| 的值 \code|x|（\code|T| 为 \code|S| 的元素类型）会应用相应的参数传递规则。
+作为特例，\code|append| 的第一个参数也可以是可赋值给类型 \code|[]byte| 的值，第二个参数为跟在 \code|...| 后面的字符串类型。这种形式会将字节追加到字符串中。
+\begin{golang}
+append(s S, x ...T) S  // T is the element type of S
+\end{golang}
+
+如果 \code|s| 的容量不足以容纳额外的值，\code|append| 会申请一个新的、足够大的底层数组来同时容纳已存在的切片元素和额外的值。
+否则，\code|append| 会复用底层数组。
+\begin{golang}
+s0 := []int{0, 0}
+// append a single element     s1 == []int{0, 0, 2}
+s1 := append(s0, 2)
+// append multiple elements    s2 == []int{0, 0, 2, 3, 5, 7}
+s2 := append(s1, 3, 5, 7)
+// append a slice              s3 == []int{0, 0, 2, 3, 5, 7, 0, 0}
+s3 := append(s2, s0...)
+// append overlapping slice    s4 == []int{3, 5, 7, 2, 3, 5, 7, 0, 0}
+s4 := append(s3[3:6], s3[2:]...)
+
+var t []interface{}
+//                             t == []interface{}{42, 3.1415, "foo"}
+t = append(t, 42, 3.1415, "foo")   
+
+var b []byte
+// append string contents      b == []byte{'b', 'a', 'r' }
+b = append(b, "bar"...)            
+\end{golang}
+
+函数 \code|copy| 会将切片元素从源 \code|src| 拷贝到目的 \code|dst| 中，并返回被拷贝的元素数量。
+两个参数必须具有相等的元素类型 \code|T| 并必须可被赋值给类型为 \code|[]T| 的切片。
+被拷贝的元素数量为 \code|len(src)| 和 \code|len(dst)| 中最小的一个。
+作为特例，\code|copy| 也可以接收可以被赋值给类型 \code|[]byte| 的目标参数和一个字符串类型作为源参数。
+这种形式会将字符串中的字节拷贝到字节切片中。
+\begin{golang}
+copy(dst, src []T) int
+copy(dst []byte, src string) int
+\end{golang}
+
+示例：
+\begin{golang}
+var a = [...]int{0, 1, 2, 3, 4, 5, 6, 7}
+var s = make([]int, 6)
+var b = make([]byte, 5)
+n1 := copy(s, a[0:])            // n1 == 6, s == []int{0, 1, 2, 3, 4, 5}
+n2 := copy(s, s[2:])            // n2 == 4, s == []int{2, 3, 4, 5, 4, 5}
+n3 := copy(b, "Hello, World!")  // n3 == 5, b == []byte("Hello")
+\end{golang}
+
+\section{映射元素的删除}
+内置函数 \code|delete| 会一个映射 \code|m| 中移除键 \code|k|。
+\code|k| 的类型必须可以赋值给 \code|m| 的键类型。
+\begin{golang}
+delete(m, k)  // remove element m[k] from map m
+\end{golang}
+如果映射 \code|m| 是 \code|nil| 或者元素 \code|m[k]| 不存在， \code|delete| 不做任何操作。
+
+\section{操作复数}
+有三个函数可以用来组合或解析复数。
+内置函数 \code|complex| 会从一个浮点实部和虚部构造一个复数值，其中 \code|real| 和 \code|imag| 会将复数值的实部和虚部。
+\begin{golang}
+complex(realPart, imaginaryPart floatT) complexT
+real(complexT) floatT
+imag(complexT) floatT
+\end{golang}
+
+参数类型和返回值类型是相对应的。
+对于 \code|complex|，两个参数必须具有相同的浮点类型，并且返回值类型是由相应的浮点类型构造出来的复数类型：
+\code|comlex64| 对应 \code|float32| 类型参数，并且 \code|complex128| 对应 \code|float64| 类型参数。
+如果其中一个参数计算为无类型常量，则必须先转换为其他参数类型。
+如果两个参数都计算为无类型常量，他们必须是非复数或者虚部必须为零，然后函数返回值是一个无类型复数常量。
+
+对于 \code|real| 和 \code|imag|，参数必须是一个复数类型，然后返回类型是对应的浮点类型：
+\code|float32| 对应 \code|complex64| 参数，\code|float64| 对应 \code|complex128| 参数。
+如果参数计算为无类型常量，则必须为一个数值，函数返回为一个无类型浮点常量。
+
+\code|real| 和 \code|imag| 函数一起形成 \code|complex| 的逆，对于复数类型 \code|Z| 的值 \code|z|，有 \code|z == Z(complex(real(z), imag(z)))|。
+
+如果这些函数的操作数均为常量，则返回值也是一个常量。
+
+\begin{golang}
+var a = complex(2, -2)             // complex128
+const b = complex(1.0, -1.4)       // untyped complex constant 1 - 1.4i
+x := float32(math.Cos(math.Pi/2))  // float32
+var c64 = complex(5, -x)           // complex64
+var s uint = complex(1, 0)         // untyped complex constant 1 + 0i 
+								   // can be converted to uint
+_ = complex(1, 2<<s)               // illegal: 2 assumes floating-point type, 
+								   // cannot shift
+var rl = real(c64)                 // float32
+var im = imag(a)                   // float64
+const c = imag(b)                  // untyped constant -1.4
+_ = imag(3 << s)                   // illegal: 3 assumes complex type, cannot shift
+\end{golang}
+
+\section{处理 panics}
+两个内置函数， \code|panic| 和 \code|recover|，用于辅助报告和处理运行时崩溃和程序定义的错误条件。
+\begin{golang}
+func panic(interface{})
+func recover() interface{}
+\end{golang}
+当执行函数 \code|F| 时，一个显式的 \code|panic| 调用或一个运行时崩溃会终止 \code|F| 的执行。
+任何被 \code|F| 延迟的函数可以被正常执行。
+然后，执行仍和被 \code|F| 的调用者延迟的函数，以此类推直到正在执行的 goroutine 中顶层函数延迟的任何函数。
+这时，程序被终止，并且将报告错误条件，其中包括 \code|panic| 的参数值。
+终止序列被称为 \emph{panicking}
+\begin{golang}
+panic(42)
+panic("unreachable")
+panic(Error("cannot parse"))
+\end{golang}
+
+\code|recover| 函数允许一个程序管理一个正在崩坏的 goroutine 行为。
+假定一个函数 \code|G| 延迟一个调用 \code|recover| 的函数 \code|D| 且在相同的 goroutine 中执行 \code|G| 时发生了崩坏。
+当延迟函数执行到 \code|D| 时，\code|D| 所调用的 \code|recover| 的返回值为传入 \code|panic| 的参数值。
+如果 \code|D| 正常返回，而不开始一个新的崩坏，将会停止崩坏序列。
+这种情况下， 关于 \code|G| 和 \code|painc| 调用之间的函数状态会被舍弃，并恢复正常执行。
+然后，执行任何在 \code|D| 之前被 \code|G| 延迟的函数并通过返回到调用者来终止 \code|G| 的执行。
+
+如果遇到以下条件，\code|recover| 的返回值为 \code|nil|：
+\begin{itemize}  
+\item \code|panic| 的参数为 \code|nil|；
+\item goroutine 未处于崩坏状态；
+\item \code|recover| 没有被延迟函数直接调用。
+\end{itemize}
+
+在下面的示例中，\code|protect| 函数调用函数参数 \code|g| 并且保护调用者免于\code|g| 引发的运行时崩溃。
+\begin{golang}
+func protect(g func()) {
+	defer func() {
+		log.Println("done")  // Println executes normally even if there is a panic
+		if x := recover(); x != nil {
+			log.Printf("run time panic: %v", x)
+		}
+	}()
+	log.Println("start")
+	g()
+}
+\end{golang}
+
+
+\section{自举}
+在自举过程中当前实现提供几个有用的内置函数。
+这些函数是为了完整性而出现在文章中，并不保证出现在语言里。
+他们不返回结果。
+\begin{table}[H]
+\centering
+\begin{tabular}{ll}
+函数 & 行为 \\ \hline
+\code|print| & 打印所有的参数；参数格式依赖于实现 \\
+\code|println| & 类似于 \code|print| 但会打印传参数间的空格并在结尾处打印换行
+\end{tabular}
+\end{table}
+受制于实现：\code|print| 和 \code|println| 不必接收任意参数类型，但是打印布尔、数值和字符串类型必须被支持。
