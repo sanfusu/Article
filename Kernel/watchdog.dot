@@ -1,0 +1,16 @@
+digraph G {
+    fontname = "微软雅黑";
+    fontsize = 8;
+    node [
+        fontname = "微软雅黑";
+        fontsize = 8;
+        shape = "record";
+    ]
+    edge [
+        fontname = "微软雅黑";
+fontsize = 8;
+    ]
+    Animal [
+        label = "{ 动物|+ name: string\l+ age: int\l|+ die() : void\l }"
+    ]
+}
