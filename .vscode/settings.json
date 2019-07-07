@@ -78,5 +78,8 @@
         "TODO",
         "FIXME",
         "NOTE"
-      ]
+    ],
+    "files.autoSave": "afterDelay",
+    "files.autoSaveDelay": 3000,
+    "latex-workshop.synctex.afterBuild.enabled": true
 }
