@@ -343,7 +343,7 @@ if v == nil {
 
 ``fallthrough'' 语句不允许出现在类型 switch 中。
 
-\section{For 语句}
+\section{For 语句}\label{sec:for}
 一个 ``for'' 语句表示一个块的重复执行。
 有三种形式：迭代可以被一个单一条件、一个 ``for'' 子部、或一个 ``range'' 子部控制。
 \begin{EBNF}
@@ -351,8 +351,8 @@ ForStmt = "for" [ Condition | ForClause | RangeClause ] Block .
 Condition = Expression .
 \end{EBNF}
 
-\subsection{具有但条件的 for 语句}
-在这种最简单的形式中，一个 ``for'' 语句表示只要布尔条件计算为真，就会重复块执行。
+\subsection{带条件的 for 语句}
+在这种最简单的形式中，只要布尔条件计算为真，\verb|for| 语句就会重复块执行。
 条件会在每次迭代之前执行。
 如果条件缺省，等价于布尔值 \code|true|。
 \begin{golang}
@@ -622,7 +622,7 @@ func f(n int) (res int, err error) {
 	return
 \end{golang}
 
-\section{Break 语句}
+\section{Break 语句}\label{sec:break}
 一个 ``break'' 语句会终止相同函数内 ``for''，``switch''，``select'' 语句的执行。
 \begin{EBNF}
 BreakStmt = "break" [ Label ] .
@@ -645,7 +645,7 @@ OuterLoop:
 	}
 \end{golang}
 
-\section{Continue 语句}
+\section{Continue 语句}\label{sec:continue}
 一个 ``continue'' 语句会从（for 语句的）后置语句开始最内层 ``for'' 循环的下一次迭代。
 ``for'' 循环必须在相同的函数内。
 \begin{EBNF}
@@ -665,7 +665,7 @@ RowLoop:
 \end{golang}
 
 
-\section{Goto 语句}
+\section{Goto 语句}\label{sec:goto}
 一个 ``goto'' 语句会将控制移交给相同函数内相应的标签语句。
 \begin{EBNF}
 GotoStmt = "goto" Label .

@@ -53,24 +53,24 @@ ThisVariableIsExported
 
 \section{关键词}
 以下为保留的关键词，不能用作标识符。
-\begin{lstlisting}[style=golang]
-break        default      func         interface    select
+\begin{goblock}
+@\hyperref[sec:break]{break}@        default      func         interface    select
 case         defer        go           map          struct
-chan         else         goto         package      switch
+chan         else         @\hyperref[sec:goto]{goto}@         package      switch
 const        fallthrough  if           range        type
-continue     for          import       return       var
-\end{lstlisting}
+@\hyperref[sec:continue]{continue}@     @\hyperref[sec:for]{for}@          import       return       var
+\end{goblock}
 
 \section{运算符和标点符号}
 以下字符序列表示运算符（包括赋值操作符）以及标点符号：
-\begin{lstlisting}[style=golang]
+\begin{goblock}
 +    &     +=    &=     &&    ==    !=    (    )
 -    |     -=    |=     ||    <     <=    [    ]
 *    ^     *=    ^=     <-    >     >=    {    }
 /    <<    /=    <<=    ++    =     :=    ,    ;
 %    >>    %=    >>=    --    !     ...   .    :
      &^          &^=
-\end{lstlisting}
+\end{goblock}
 
 \section{整型字面量}
 一个整型字面量是标识整型常量的一个数字序列。

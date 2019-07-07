@@ -97,11 +97,18 @@ leftmargin=*
 	pdfkeywords=golang,
 }
 \newcommand{\code}{\lstinline}
+\newcommand{\gocode}{\lstinline[language=golang, style=golang]}
 
+% TODO language 和 style 可能重复
+% FIXME depreciated
 \lstnewenvironment{golang}[1][left]{
 \lstset{language=golang, style=golang, numbers=#1}
 }{}
 
 \lstnewenvironment{EBNF}[1][left]{
 \lstset{language=EBNF, style=EBNF, numbers=#1}
+}{}
+
+\lstnewenvironment{goblock}[1][left]{
+\lstset{language=golang, style=golang, numbers=#1}
 }{}
