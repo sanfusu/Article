@@ -298,7 +298,7 @@ TypeSwitchGuard 可以包含一个短变量声明。
 至多有一个 \code|nil| case。
 
 给定一个类型为 \code|interface{}| 的表达式 \code|x|，下列类型 switch：
-\begin{golang}
+\begin{goblock}
 switch i := x.(type) {
 case nil:
 	printString("x is nil")                // type of i is type of x (interface{})
@@ -313,9 +313,9 @@ case bool, string:
 default:
 	printString("don't know the type")     // type of i is type of x (interface{})
 }
-\end{golang}
+\end{goblock}
 可以重写为：
-\begin{golang}
+\begin{goblock}
 v := x  // x is evaluated exactly once
 if v == nil {
 	i := v                                 // type of i is type of x (interface{})
@@ -337,15 +337,15 @@ if v == nil {
 		printString("don't know the type")
 	}
 }
-\end{golang}
+\end{goblock}
 
 类型 switch guard 前面可以放上一个简单语句，该语句会在 guard 计算之前执行。
 
 ``fallthrough'' 语句不允许出现在类型 switch 中。
 
 \section{For 语句}\label{sec:for}
-一个 ``for'' 语句表示一个块的重复执行。
-有三种形式：迭代可以被一个单一条件、一个 ``for'' 子部、或一个 ``range'' 子部控制。
+一个 \gocode{for} 语句表示一个块的重复执行。
+共有三种形式：被一个单一条件、\gocode{for} 子句、或 \gocode{range} 子句控制的三种 \gocode{for} 循环。
 \begin{EBNF}
 ForStmt = "for" [ Condition | ForClause | RangeClause ] Block .
 Condition = Expression .
@@ -354,7 +354,7 @@ Condition = Expression .
 \subsection{带条件的 for 语句}
 在这种最简单的形式中，只要布尔条件计算为真，\verb|for| 语句就会重复块执行。
 条件会在每次迭代之前执行。
-如果条件缺省，等价于布尔值 \code|true|。
+如果条件缺省，等价于布尔值 \gocode{true}。
 \begin{golang}
 for a < b {
 	a *= 2
@@ -362,8 +362,8 @@ for a < b {
 \end{golang}
 
 \subsection{带有 for 子部的 For 语句}
-带有 ForClause 的 ``for'' 语句也被其条件控制，但会有额外的初始和后置语句，比如一个赋值，一个自增或自减语句。
-初始语句可以是一个短变量声明，但是后置语句不可以。
+带有 ForClause 的 \gocode{for} 语句也被其条件控制，但会有额外的初始和后置语句，比如一个赋值，一个自增或自减语句。
+初始语句可以是一个短变量声明\hreftext{sec:shortVarDeclare}，但是后置语句不可以。
 初始语句中声明的变量可以在每次迭代中重复使用。
 \begin{EBNF}
 ForClause = [ InitStmt ] ";" [ Condition ] ";" [ PostStmt ] .
