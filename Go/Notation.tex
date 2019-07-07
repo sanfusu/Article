@@ -1,8 +1,8 @@
 % !TeX root = Main.tex
 
 \chapter{记号}
-% @Note 脚注或许可以去除
-语法格式通过扩展的巴克斯范式（EBNF）表示。
+% NOTE 脚注或许可以去除
+语法格式通过扩展的巴克斯范式（EBNF）表示：
 \begin{EBNF}
 Production	= production_name "=" [ Expression ] "." .
 Expression 	= Alternative { "|" ALternative } .
@@ -15,12 +15,12 @@ Repetition  = "{" Expression "}" .
 
 Productions 是由 terms 以及下列操作符构成的表达式，按递增优先级如下：
 \begin{description}[font=\ttfamily\bfseries, style=nextline, leftmargin=2\parindent, labelindent=\parindent]
-	\item [|] alternation
-	\item [()] grouping
-	\item [{[]}] option (0 or 1 times)
-	\item [\{\}] repetition (0 to n times)
+	\item [|]		可替代
+	\item [()]		分组
+	\item [{[]}]	选项 (0 or 1 个)
+	\item [\{\}]	重复 (0 to n 个)
 \end{description}
-小写的产生式名被用来标识词法记号。
+小写的产生式名用来表示词法记号。
 非终止符使用峰驼命名法。
 词法记号被包含在双引号 \code|""| 或者反撇号 \lstinline|``| 中。
 

@@ -72,5 +72,11 @@
         "**/.DS_Store": true,
         "**/*.aux": true,
         "**/*.gz": true
-    }
+    },
+    "todo-tree.regex": "((%|//|#|<!--|;|/\\*|^)\\s*($TAGS)|^\\s*- \\[ \\])",
+    "todo-tree.tags": [
+        "TODO",
+        "FIXME",
+        "NOTE"
+      ]
 }

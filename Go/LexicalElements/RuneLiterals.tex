@@ -1,7 +1,5 @@
 % !TeX root = ../Main.tex
-
-
-\section{Rune literals}
+\section{Rune literals}\label{sec:rune}
 一个\rune{}字面量表示一个\rune{}常量，
 一个用来标识 Unicode 编码点的整数值。
 一个\rune{}字面量使用单引号包含的一个或多个字符来表达，如 \lstinline|'x'| 或者 \lstinline|'\n'|。
@@ -12,15 +10,16 @@
 \rune{}字面量的最简单形式是在引号内表示单个字符；
 由于 Go 源文本是 UTF-8 编码的 Unicode 字符，所以多个 UTF-8 编码的字节可以使用单个整数值表示。
 比如字面值 \lstinline|'a'| 拥有表示字面量 \lstinline|a| 的单个字节，
-Unicode 编码点为 U+0061，值为 \lstinline|0x61|，但是 \lstinline|'ä'| 则拥有两个（0xc3, 0xa4）用来表示 a 的分音符号的字节，
+Unicode 编码点为 U+0061，值为 \lstinline|0x61|，但是 \lstinline|'ä'| 则拥有两个（0xc3, 0xa4）两个字节，用来表示 a 的分音符号，
 U+00E4，值为 \lstinline|0xe4|。
 
-有几个反斜杠转义允许将任意值编码为 ASCII 文本。
-有四种方式将整型值表示为数字常量：
-\lstinline|\x| 后面跟上两个十六进制数；
-\lstinline|\u| 后面跟上四个十六进制数；
-\lstinline|\U| 后面跟上八个十六进制数；
-\lstinline|\|  后面跟上三个八进制数。
+通过以下几种反斜杠转义，可以将任意值编码为 ASCII 文本（\rune 常量）：
+\begin{enumerate}
+\item \lstinline|\x| 后面跟上两个十六进制数；
+\item \lstinline|\u| 后面跟上四个十六进制数；
+\item \lstinline|\U| 后面跟上八个十六进制数；
+\item \lstinline|\|  后面跟上三个八进制数。
+\end{enumerate}
 每一种表示方法中，字面量的值为数字使用相应的进制表示的值。
 
 尽管这些表示的结果均为整型，但是他们拥有不同的有效范围。

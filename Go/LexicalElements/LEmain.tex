@@ -8,7 +8,7 @@
     \item 行注释以字符序列 \verb|//| 开头，并且结束于行尾。
     \item 通用注释起始于 \verb|/*| 并且结束于随后所遇到的第一个字符序列 \verb|*/|。
 \end{enumerate}
-注释不能起始于一个 rune 或者字符串文字，或者一个注释内部。
+注释不能起始于一个\rune 或者字符串文字，或者一个注释内部。
 不包含换行的通用注释和空格的作用一样。
 任何其他注释都和换行的作用一致。
 
@@ -21,14 +21,14 @@
 当输入分解为记号时，下一个记号将会是形成有效记号的最长字符序列。
 
 \section{分号}
-形式化语法使用分号 ``;'' 作为产生式的终止符。
+形式化语法使用分号 ``\verb|;|'' 作为产生式的终止符。
 Go 程序可以通过以下两个规则省略大部分分号：
 \begin{enumerate}
-\item 当输入分解为语言符号时，如果一行的最后一个语言符号为以下几种情况，则会自动插入到行末。
+\item 当输入分解为语言符号时，如果一行的最后一个语言符号为以下几种情况，则会将分号自动插入到行末。
 	\begin{itemize}
 		\item 标志符
-		\item 整型, 浮点，虚数，rune，或者字符串文字
-		\item 关键词 \verb|break|, \verb|continue|, \verb|fallthrough|, 或者 \verb|return| 中的一个。
+		\item 整型, 浮点，虚数，\rune \footnote{关于 \rune 请见章节\ref{sec:rune}}，或者字符串
+		\item 关键词 \verb|break|、\verb|continue|、\verb|fallthrough|、\verb|return| 中的一个。
 		\item \verb|++, --, ), ]| 或 \verb|}| 运算符和标点符号中的一个。
 	\end{itemize}
 \item 为了能让复合语句占据单行，\verb|)| 和 \verb|}| 前的分号可以省略。 

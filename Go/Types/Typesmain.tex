@@ -52,7 +52,7 @@ type (
 \section{数值类型}
 一个数值类型表示整数或浮点值的集合。
 预声明的依赖于体系结构的数值类型为：
-\begin{description}[leftmargin=4\parindent,style=sameline] % @FIXME 使用 description 重写这部分格式。
+\begin{description}[leftmargin=4\parindent,style=sameline] % FIXME 使用 description 重写这部分格式。
 \item[uint8]	   the set of all unsigned  8-bit integers (0 to 255)
 \item[uint16]      the set of all unsigned 16-bit integers (0 to 65535)
 \item[uint32]      the set of all unsigned 32-bit integers (0 to 4294967295)
@@ -131,7 +131,7 @@ SliceType = "[" "]" ElementType .
 
 底层数组可能会超过切片的结尾。
 切片的容量为该区间的度量：切片的长度加上数组超过切片的长度。
-长度为其容量的切片可以通过从原有切片中重新划分。% @FIXME 翻译需要斟酌
+长度为其容量的切片可以通过从原有切片中重新划分。% FIXME 翻译需要斟酌
 切片 \lstinline|a| 的容量可以通过内置函数 \lstinline|cap(a)| 计算得出。
 
 通过内置函数 \lstinline|make| 创建一个给定的初始化过的切片值，该函数需切片类型和指定长度的参数以及可选的容量参数。

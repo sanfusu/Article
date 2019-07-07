@@ -11,16 +11,23 @@
 %	subsection/number=\arabic{subsection},
 %	subsection/format += \centering,
 }
-\newcommand{\rune}{符文} % @FIXME 尚未确定 rune 译名
+\newcommand{\rune}{rune} % FIXME 尚未确定 rune 译名
 %\lstset{
 %	language=golang
 %}
 %opening
+\begin{document}
+
+\begin{titlepage}
 \title{Golang}
 \author{sanfusu $<$\href{mailto:sanfusu@foxmail.com}{sanfusu@foxmail.com}$>$ 译校}
-
-\begin{document}
 \maketitle
+\begin{abstract}
+	本文（书）源自 golang 的官方语言规范，
+	但会随着校对或依据个人理解的反复修改中逐步脱离源语言规范（内容上）。
+\end{abstract}
+\end{titlepage}
+
 \include{./Introduction}
 \include{./Notation}
 \include{./SourceCodeRepresentation/scr}
