@@ -1,5 +1,5 @@
 % !TeX root = ../Main.tex
-\section{Rune literals}\label{sec:rune}
+\section{Rune 字面量}\label{sec:rune}
 一个\rune{}字面量表示一个\rune{}常量，
 一个用来标识 Unicode 编码点的整数值。
 一个\rune{}字面量使用单引号包含的一个或多个字符来表达，如 \lstinline|'x'| 或者 \lstinline|'\n'|。
@@ -8,10 +8,10 @@
 但是以反斜杠开头的多字符序列会以各种格式对值进行编码。
 
 \rune{}字面量的最简单形式是在引号内表示单个字符；
-由于 Go 源文本是 UTF-8 编码的 Unicode 字符，所以多个 UTF-8 编码的字节可以使用单个整数值表示。
+由于 Go 源文本是 UTF-8 编码的 Unicode 字符，所以 UTF-8 编码的多字节可以使用单个整数值表示。
 比如字面值 \lstinline|'a'| 拥有表示字面量 \lstinline|a| 的单个字节，
-Unicode 编码点为 U+0061，值为 \lstinline|0x61|，但是 \lstinline|'ä'| 则拥有两个（0xc3, 0xa4）两个字节，用来表示 a 的分音符号，
-U+00E4，值为 \lstinline|0xe4|。
+Unicode 编码点为 U+0061，值为 \lstinline|0x61|，但是 \lstinline|'ä'| 则拥有（0xc3, 0xa4）两个字节，用来表示 a 的分音符号，
+Unicode 编码点为 U+00E4，值为 \lstinline|0xe4|。
 
 通过以下几种反斜杠转义，可以将任意值编码为 ASCII 文本（\rune 常量）：
 \begin{enumerate}

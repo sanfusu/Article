@@ -8,7 +8,7 @@
     \item 行注释以字符序列 \verb|//| 开头，并且结束于行尾。
     \item 通用注释起始于 \verb|/*| 并且结束于随后所遇到的第一个字符序列 \verb|*/|。
 \end{enumerate}
-注释不能起始于一个\rune 或者字符串文字，或者一个注释内部。
+注释不能起始于一个\rune{}\hreftext{sec:rune}或者字符串文字，或者一个注释内部。
 不包含换行的通用注释和空格的作用一样。
 任何其他注释都和换行的作用一致。
 
@@ -22,12 +22,12 @@
 
 \section{分号}
 形式化语法使用分号 ``\verb|;|'' 作为产生式的终止符。
-Go 程序可以通过以下两个规则省略大部分分号：
+Go 程序可以通过以下两个规则省略大多数分号：
 \begin{enumerate}
 \item 当输入分解为语言符号时，如果一行的最后一个语言符号为以下几种情况，则会将分号自动插入到行末。
 	\begin{itemize}
 		\item 标志符
-		\item 整型, 浮点，虚数，\rune \footnote{关于 \rune 请见章节\ref{sec:rune}}，或者字符串
+		\item 整型, 浮点，虚数，\rune \footnote{关于 \rune{} 请见章节\ref{sec:rune}}，或者字符串
 		\item 关键词 \verb|break|、\verb|continue|、\verb|fallthrough|、\verb|return| 中的一个。
 		\item \verb|++, --, ), ]| 或 \verb|}| 运算符和标点符号中的一个。
 	\end{itemize}
@@ -98,13 +98,13 @@ hex_lit     = "0" ( "x" | "X" ) hex_digit { hex_digit } .
 指数部分， e 或者 E 后面紧跟着一个可选的有符号十进制指数。
 可以省略整数部分或者小数部分中的一个；
 类似的，小数点或者指数中的一个可以被省略。
-\begin{lstlisting}[style=golang]
+\begin{EBNFblock}
 float_lit = decimals "." [ decimals ] [ exponent ] |
             decimals exponent |
             "." decimals [ exponent ] .
 decimals  = decimal_digit { decimal_digit } .
 exponent  = ( "e" | "E" ) [ "+" | "-" ] decimals .
-\end{lstlisting}
+\end{EBNFblock}
 
 \begin{lstlisting}[style=golang]
 0.
