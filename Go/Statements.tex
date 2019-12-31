@@ -62,33 +62,38 @@ Label       = identifier .
 Error: log.Panic("error encountered")
 \end{lstlisting}
 
-\section{表达式语句}
-除了特定的内置函数外，函数和方法调用以及接收操作可以出现在语句上下文中。这种语句可以使用圆括弧包含。
+\section{表达式语句}\label{sec:expression statements}
+除了特定的内置函数外，函数和方法调用以及\hyperref[sec:recv operator]{接收操作}可以出现在语句上下文中。这种语句可以使用圆括弧包含。
 \begin{lstlisting}[style=EBNF, language=EBNF]
 ExpressionStmt = Expression .
 \end{lstlisting}
 
 下列内置函数不允许出现在语句上下文中。
-\begin{lstlisting}[style=golang, language=golang]
+\begin{goblock}
 append cap complex imag len make new real
 unsafe.Alignof unsafe.Offsetof unsafe.Sizeof
-\end{lstlisting}
-\begin{lstlisting}[style=golang, language=golang]
+\end{goblock}
+
+\begin{goblock}
 h(x+y)
 f.Close()
 <-ch
 (<-ch)
 len("foo")  // illegal if len is the built-in function
-\end{lstlisting}
+\end{goblock}
 
-\section{发送语句}
+\section{发送语句} \label{sec:send statement}
 一个发送语句会在通道上发送一个值。
-通道表达式必须是一个通道类型，通道方向必须允许发送操作，被发送的值的类型必须可赋值给通道的元素类型。
+通道表达式必须是一个\hyperref[sec:channel type]{通道类型}，通道方向必须允许发送操作，被发送的值的类型必须可赋值给通道的元素类型。
 \begin{EBNF}
 SendStmt = Channel "<-" Expression .
 Channel  = Expression .
 \end{EBNF}
 
+通道和值表达式均会在通讯开始之前被计算。
+通讯会一直阻塞到发送被处理位置。
+无缓冲通道中的发送只会在接送者准备好之时处理，有缓冲通道中的发送则会在缓存有剩余时处理。
+在已关闭的通道中进行发送，会导致\hyperref[ch:run-time panics]{运行时 panic}。\gocode|nil| 通道中的发送则会被永久阻塞。
 \begin{lstlisting}[style=golang, language=golang]
 ch <- 3  // send value 3 to channel ch
 \end{lstlisting}
@@ -471,19 +476,19 @@ for w := range ch {
 for range ch {}
 \end{golang}
 
-\section{Go 语句}
-一个 ``go'' 语句会作为独立的并行线程控制（或 goroutine）在同一个地址空间中执行一个函数调用。
+\section{Go 语句} \label{sec:go statement}
+一个 ``go'' 语句会作为独立的并行线程控制（或 goroutine）在同一个地址空间中执行一个函数。
 \begin{EBNF}
 GoStmt = "go" Expression .
 \end{EBNF}
 
 其中表达式必须是一个函数或方法调用；不能被圆括弧包含。
-调用内置函数的限制和表达式语句一样。
+调用内置函数的限制和\hyperref[sec:expression statements]{表达式语句}一样。
 
-函数值和参数会和 goroutine 调用一样计算，但是不想常规调用，程序执行不会等待被调函数完成。
-而是，使用新的 goroutine 独立执行。
-当函数终止时，其 goroutine 也会终止。
-如果函数具有任何返回值，则会在函数完成时舍弃。
+函数值和参数的计算和 goroutine 一样，但是和常规调用不同
+——程序执行不会等待被调函数完成，被调函数会在新的 goroutine 中独立执行。
+当函数终止时，其所在的 goroutine 也会终止。
+函数中的任何返回值则会在函数完成时被舍弃。
 \begin{golang}
 go Server()
 go func(ch chan<- bool) { for { sleep(10); ch <- true }} (c)
