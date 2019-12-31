@@ -271,7 +271,7 @@ func(n int) func(p *T)
 \section{接口类型}
 一个接口类型表示一个被称为接口的方法集。
 一个接口类型变量可以存储任何方法集为接口超集的类型的变量。
-这种类型被称为\lstinline|接口的实现|。
+这种类型被称为接口的实现。
 未初始化的接口类型变量的值为 \lstinline|nil|。
 \begin{lstlisting}[style=EBNF]
 InterfaceType      = "interface" "{" { MethodSpec ";" } "}" .
@@ -387,14 +387,14 @@ make(map[string]int, 100)
 初始容量并不会限制 map 的大小：map 会根据其存储的元素数量来增加大小。一个 \lstinline|nil| map
 等价于一个空 map，但无法向其中添加元素。
 
-\section{通道类型}
-一个通道通过使用发送和接受特定元素类型的值为并发执行函数提供通讯机制。
-未初始化的通道的值为 \lstinline|nil|
+\section{通道类型} \label{sec:channel type}
+一个通道通过使用收发特定元素类型的值为\hyperref[sec:go statement]{并发执行函数}提供通讯机制。
+未初始化的通道的值为 \gocode|nil|
 \begin{lstlisting}[style=EBNF]
 ChannelType = ( "chan" | "chan" "<-" | "<-" "chan" ) ElementType .
 \end{lstlisting}
 
-可选的 \lstinline|<-| 运算符表好似通道方向，发送还是接收。
+可选的 \gocode|<-| 运算符表示通道方向：发送还是接收。
 如果没有给定方向，则通道是双向的。
 一个通道可以通过转换或赋值限制为只用作发送或者只用作接收。
 \begin{lstlisting}[style=golang]
@@ -403,7 +403,7 @@ chan<- float64  // can only be used to send float64s
 <-chan int      // can only be used to receive ints
 \end{lstlisting}
 
-\lstinline|<-| 会和最左边的 \lstinline|chan| 关联：
+\gocode|<-| 会尽可能的和最左边的 \gocode|chan| 关联：
 \begin{lstlisting}[style=golang]
 chan<- chan int    // same as chan<- (chan int)
 chan<- <-chan int  // same as chan<- (<-chan int)
@@ -411,8 +411,8 @@ chan<- <-chan int  // same as chan<- (<-chan int)
 chan (<-chan int)
 \end{lstlisting}
 
-一个新的，且初始化过的通道值可以通过内置函数 \lstinline|make| 来创建，
-\lstinline|make| 函数需要通道类型和可选的容量作为参数：
+通道可以通过内置函数 \gocode|make| 创建并进行初始化。
+\gocode|make| 函数需要通道类型和可选的容量作为参数：
 \begin{lstlisting}[style=golang]
 make(chan int, 100)
 \end{lstlisting}
@@ -421,12 +421,14 @@ make(chan int, 100)
 若有缓冲区，则会在发送时未满，接收时未空，才会无阻塞的通讯成功。
 一个 \lstinline|nil| 通道永远不会处于准备通讯状态。
 
-通道可以使用内置函数 \lstinline|close| 关闭。
-接收运算符的多值赋值形式可以用来报告，接受的值是否在通道关闭之前发送。
+通道可以使用内置函数 \hyperref[sec:close]{\lstinline|close|} 关闭。
+\hyperref[sec:recv operator]{接收运算符}的多值赋值形式可以用来报告接受的值是否在通道关闭之前发送。
 
-单通道可能会被用在发送语句，接收操作，和被任意数量的无跟多的同步操作的 goroutinges 调用 \lstinline|cap| 和 \lstinline|len| 内置函数。
+单通道可以被用在\hyperref[sec:send statement]{发送语句}
+和\hyperref[sec:recv operator]{接收操作}中，
+以及被任意数量无需同步操作的 goroutine 调用的 \lstinline|cap| 和 \lstinline|len| 内置函数。
 通道的表现形式为先进先出的队列。
-比如一个 goroutine 向一个通道发送值，而第二个 goroutine 用于接收值，那么这些值会按照发送的顺序接收。
+比如一个 goroutine 向一个通道发送值，而第二个 goroutine 用于接收值，这些值会按照发送的顺序接收。
 
 
 
