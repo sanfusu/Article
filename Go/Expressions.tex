@@ -876,12 +876,12 @@ var x *int = nil
 &*x  // causes a run-time panic
 \end{lstlisting}
 
-\section{接收运算符}
-对于通道类型的操作数 \code|ch|，接收运算 \code|<-ch| 的值为从通道 \code|ch| 中接收到的值。
+\section{接收运算符} \label{sec:recv operator}
+对于\hyperref[sec:channel type]{通道类型}的操作数 \gocode|ch|，接收运算 \gocode|<-ch| 的值为从通道 \gocode|ch| 中接收到的值。
 通道方向必须允许接收运算，且接收运算的类型为通道的元素类型。
 表达式会一直阻塞到有可获得的值。
-从一个 \code|nil| 通道接收值会一直阻塞。
-闭合通道上的接收运算永远会立即关闭，并在任何前一个发送的值已被接收后，提供一个元素类型的 0 值。
+从一个 \gocode|nil| 通道接收值会一直阻塞。
+闭合通道上的接收运算永远会立即关闭，并在任何前一个发送的值已被接收后，提供一个该元素类型的 0 值。
 \begin{lstlisting}[style=golang]
 v1 := <-ch
 v2 = <-ch
@@ -889,16 +889,16 @@ f(<-ch)
 <-strobe  // wait until clock pulse and discard received value
 \end{lstlisting}
 
-在赋值或初始化中的接收表达式的特殊形式
+在赋值或初始化中使用到的接收表达式的特殊形式
 \begin{lstlisting}[style=golang]
 x, ok = <-ch
 x, ok := <-ch
 var x, ok = <-ch
 var x, ok T = <-ch
 \end{lstlisting}
-会提供一个报告通信是否成功的无类型布尔结果。
-如果接收的值被一个成功的发送通道操作传达\code|ok| 的值为 \code|true|；
-如果通道是关闭的或为空，则会产生一个 \code|false|。
+会提供一个动态类型布尔值来报告通信成功与否。
+如果接收的值被一个成功的发送通道操作传达，那么 \gocode|ok| 的值为 \gocode|true|；
+如果通道是关闭的或者为空，则为 \gocode|false|。
 
 \section{转换}
 转换是 \code|T(x)| 形式的表达式，其中 \code|T| 是一个类型且 \code|x| 是一个可以被转换为类型 \code|T| 的表达式。
