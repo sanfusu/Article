@@ -1,7 +1,9 @@
 % !TeX root = Main.tex
-\chapter{运行时崩溃}
-尝试使用超出边界的索引来访问数组会触发运行时崩溃，这种执行错误等价于使用实现定义的接口类型 \code|runtime.Error| 参数来对内置函数 \code|painc| 进行调用。
-这种类型满足预声明接口类型 \code|error|。
+\chapter{运行时崩溃} \label{ch:run-time panics}
+尝试使用超出边界的索引来访问数组会触发运行时崩溃，
+这种执行错误等价于对内置函数 \gocode|panic|
+传入由\emph{实现定义}的 \gocode|runtime.Error| 接口类型的值进行调用。
+这种类型满足预声明接口类型\hyperref[ch:errors]{\gocode|error|}。
 用来表示不同运行时错误条件的实际错误值是未指明的。
 \begin{golang}
 package runtime
