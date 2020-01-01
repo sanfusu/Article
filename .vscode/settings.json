@@ -1,14 +1,8 @@
 {
+    "latex-workshop.view.pdf.viewer": "browser",
+    "latex-workshop.intellisense.package.enabled": true,
+    "latex-workshop.latex.outDir": "%DIR%/out",
     "latex-workshop.latex.tools": [
-        {
-            "name": "xelatex",
-            "command": "xelatex",
-            "args": [
-                "-synctex=1",
-                "-interaction=nonstopmode",
-                "%DOC%"
-            ]
-        },
         {
             "name": "latexmk",
             "command": "latexmk",
@@ -16,9 +10,32 @@
                 "-synctex=1",
                 "-interaction=nonstopmode",
                 "-file-line-error",
-                "-pdf",
+                "-xelatex",
+                "-outdir=%OUTDIR%",
                 "%DOC%"
-            ]
+            ],
+            "env": {}
+        },
+        {
+            "name": "lualatexmk",
+            "command": "latexmk",
+            "args": [
+                "-synctex=1",
+                "-interaction=nonstopmode",
+                "-file-line-error",
+                "-lualatex",
+                "-outdir=%OUTDIR%",
+                "%DOC%"
+            ],
+            "env": {}
+        },
+        {
+            "name": "latexmk_rconly",
+            "command": "latexmk",
+            "args": [
+                "%DOC%"
+            ],
+            "env": {}
         },
         {
             "name": "pdflatex",
@@ -28,31 +45,39 @@
                 "-interaction=nonstopmode",
                 "-file-line-error",
                 "%DOC%"
-            ]
+            ],
+            "env": {}
         },
         {
             "name": "bibtex",
             "command": "bibtex",
             "args": [
                 "%DOCFILE%"
-            ]
+            ],
+            "env": {}
         }
     ],
     "latex-workshop.latex.recipes": [
         {
-            "name": "xelatex",
-            "tools": [
-                "xelatex"
-            ]
-        },
-        {
-            "name": "latexmk",
+            "name": "latexmk 🔃",
             "tools": [
                 "latexmk"
             ]
         },
         {
-            "name": "pdflatex -> bibtex -> pdflatex*2",
+            "name": "latexmk (latexmkrc)",
+            "tools": [
+                "latexmk_rconly"
+            ]
+        },
+        {
+            "name": "latexmk (lualatex)",
+            "tools": [
+                "lualatexmk"
+            ]
+        },
+        {
+            "name": "pdflatex ➞ bibtex ➞ pdflatex × 2",
             "tools": [
                 "pdflatex",
                 "bibtex",
@@ -62,24 +87,5 @@
         }
     ],
     "workbench.colorTheme": "Solarized Light",
-    "editor.fontWeight": "500",
-    "editor.fontSize": 16,
-    "files.exclude": {
-        "**/.git": true,
-        "**/.svn": true,
-        "**/.hg": true,
-        "**/CVS": true,
-        "**/.DS_Store": true,
-        "**/*.aux": true,
-        "**/*.gz": true
-    },
-    "todo-tree.regex": "((%|//|#|<!--|;|/\\*|^)\\s*($TAGS)|^\\s*- \\[ \\])",
-    "todo-tree.tags": [
-        "TODO",
-        "FIXME",
-        "NOTE"
-    ],
-    "files.autoSave": "afterDelay",
-    "files.autoSaveDelay": 3000,
-    "latex-workshop.synctex.afterBuild.enabled": true
+    "files.autoSave": "afterDelay"
 }
