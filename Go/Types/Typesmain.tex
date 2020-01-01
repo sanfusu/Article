@@ -36,11 +36,11 @@ type (
 
 \section{方法集}
 一个类型可能会有与其相关联的方法集。
-一个接口类型的方法集是其接口。
-其他任何类型 \lstinline|T| 的方法集由所有使用类型 \lstinline|T| 作为接收器声明的方法组成。
-指针类型 \lstinline|*T| 相应的方法集为所有使用接收器 \lstinline|*T| 或 \lstinline|T| 声明的方法的集合（也就是说，包含 \lstinline|T| 的方法集）。
-此外，如\hyperref[sec:struct-type]{结构体类型}小节中所说，这些规则同样适用于包含嵌入字段的结构体。
-任何其他类型具有空方法集。
+而\hyperref[sec:interface types]{接口类型}的方法集是其接口。
+其他任何类型 \lstinline|T| 的方法集由所有使用类型 \lstinline|T| 作为接收器声明的\hyperref[sec:method declarations]{方法}组成。
+指针类型 \lstinline|*T| 相应的方法集为所有使用接收器 \lstinline|*T| 或 \lstinline|T| 声明的方法的集合（也就是说，\gocode|*T| 的方法集包含 \lstinline|T| 的方法集）。
+此外，如\hyperref[sec:struct types]{结构体类型}章节中所说，这些规则同样适用于包含嵌入字段的结构体。
+任何其他类型都具有空方法集。
 在一个方法集中，每一个方法必须有一个独一无二的非空方法名。
 
 一个类型的方法集决定了该类型实现的接口和可通过该类型接收器所调用的方法。
@@ -149,10 +149,10 @@ new([100]int)[0:50]
 使用数组的数组是，内部数组永远具有相同的长度；但是在使用切片的切片时（或者切片的数组），内部长度可以动态的变化。
 此外，内部切片必须独立的初始化。
 
-\section{结构体类型}\label{sec:struct-type}
+\section{结构体类型}\label{sec:struct types}
 一个结构体是一个被称为字段的命名元素序列，每一个元素都有一个名字和类型。
 字段名既可以显式的指明（标识符列表），也可以隐式的指明（嵌入字段）。
-在结构体中，非空白字段名必须独一无二的。
+在结构体中，非空白字段名必须\hyperref[sec:uniqueness of identifiers]{独一无二的}。
 \begin{lstlisting}[style=EBNF]
 StructType    = "struct" "{" { FieldDecl ";" } "}" .
 FieldDecl     = (IdentifierList Type | EmbeddedField) [ Tag ] .
@@ -268,7 +268,7 @@ func(n int) func(p *T)
 \end{lstlisting}
 
 
-\section{接口类型}
+\section{接口类型} \label{sec:interface types}
 一个接口类型表示一个被称为接口的方法集。
 一个接口类型变量可以存储任何方法集为接口超集的类型的变量。
 这种类型被称为接口的实现。

@@ -1,11 +1,13 @@
 \chapter{表达式}
 一个表达式通过对操作数施加运算符和函数来表示一个值的计算。
 
-\section{操作数}
-操作数表示一个表达式中的元素值。
-一个操作数可能是一个字面量，一个非空标识符（可以是被限定的）表示一个常量、变量、或这函数、或者一个参数化的表达式。
+\section{操作数} \label{sec:operands}
+操作数表示一个表达式中的基本值。
+一个操作数可以是字面量，
+也可以是一个表示常量、变量、或函数的非\hyperref[sec:blank identifier]{空标识符}（可以是被\hyperref[sec:qualified identifiers]{限定的}），
+亦可以是一个参数化的表达式。
 
-空白标识符只能在赋值表达式的左侧作为操作数出现。
+\hyperref[sec:blank identifier]{空白标识符}只能在\hyperref[sec:assignments]{赋值表达式}的左侧作为操作数出现。
 \begin{lstlisting}[style=EBNF]
 Operand     = Literal | OperandName | "(" Expression ")" .
 Literal     = BasicLit | CompositeLit | FunctionLit .
@@ -13,7 +15,7 @@ BasicLit    = int_lit | float_lit | imaginary_lit | rune_lit | string_lit .
 OperandName = identifier | QualifiedIdent.
 \end{lstlisting}
 
-\section{限定的标识符}
+\section{限定的标识符} \label{sec:qualified identifiers}
 一个限定的标识符是一个使用包名作为前缀限定的标识符。
 包名和标识符均不能为空白标识符。
 \begin{lstlisting}[style=EBNF]
@@ -681,7 +683,7 @@ f() || g()
 x == y+1 && <-chanPtr > 0
 \end{lstlisting}
 
-\section{算术运算符}
+\section{算术运算符} \label{sec:arithmetic operators}
 算术运算符适用于数值并能提供和第一个操作数相同类型的结果。
 四个标准算术运算符（\code|+,-,*,/|）适用于整型，浮点，和复数类型；
 \code|+| 同样适用于字符串。
@@ -689,13 +691,13 @@ x == y+1 && <-chanPtr > 0
 \begin{table}[H]
 \centering
 \begin{tabularx}{.8\textwidth}{llX}
-+ & sum                    & integers, floats, complex values, strings \\
-- & difference             & integers, floats, complex values	\\
+\gocode|+| & sum                    & integers, floats, complex values, strings \\
+\gocode|-| & difference             & integers, floats, complex values	\\
 \code|*| & product                & integers, floats, complex values	\\
-/ & quotient               & integers, floats, complex values	\\
-\% & remainder              & integers		\\
-\& & bitwise AND            & integers	\\
-| & bitwise OR             & integers	\\
+\gocode|/| & quotient               & integers, floats, complex values	\\
+\gocode|\%| & remainder              & integers		\\
+\gocode|\&| & bitwise AND            & integers	\\
+\gocode|\|| & bitwise OR             & integers	\\
 \code|\^| & bitwise XOR            & integers	\\
 \code|\&\^| & bit clear (AND NOT)    & integers	\\
 \code|<<| & left shift             & integer \code|<<| unsigned integer	\\
@@ -851,19 +853,26 @@ var (
 右运算符会根据条件进行计算。
 \begin{table}[h]
 \centering
-\begin{tabular}{lll}
+\begin{tabular}{l|l|l}
 \code|&&| & 条件与 &  \code|p && q| 为 ``if p then q else false'' \\
 \code!||!	& 条件或 & \code!p || q! 为 ``if p then true else q'' \\
 \code|!|  & 非 & \code|!p| 为 ``not p'' \\
 \end{tabular}
 \end{table}
 
-\section{地址运算符}
-对于类型为 \code|T| 的操作数 \code|x|，取地址运算 \code|&x| 会产生一个指向 \code|x| 的 \code|*T| 类型的指针。
-操作数必须时可寻址的，也就是说可以是：一个变量、指针反引用，或切片索引运算、一个可寻址结构体操作数的字段选择器；
+\section{寻址运算符} \label{sec:address operators}
+% TODO: 指针反引用具体是什么？
+对于类型为 \code|T| 的操作数 \code|x|，
+取地址运算 \code|&x| 会产生一个指向 \code|x| 的 \code|*T| 类型的指针。
+操作数必须是可寻址的，
+也就是说可以是：一个变量、指针反引用，或切片索引运算、一个可寻址结构体操作数的字段选择器；
 或者可寻址数组的数组索引运算。
-作为可寻址的特例，\code|x| 同时可以是一个复合字面量（可以用圆括弧包含）。
+作为可寻址的特例：\code|x| 同时可以是一个复合字面量（可以用圆括弧包含）。
 如果 \code|x| 的计算会导致一个运行时错误，那么 \code|&x| 同样也会导致运行时错误。
+
+对于指针类型 \gocode|*T| 的操作数 \gocode|x|，
+指针反引用 \gocode|*x| 表示 \gocode|x| 所指向的类型为 \gocode|T| 的变量。
+如果 \gocode|x| 是 \gocode|nil|，尝试计算 \gocode|*x| 会导致运行时 panic。
 \begin{lstlisting}[style=golang]
 &x
 &a[f(2)]

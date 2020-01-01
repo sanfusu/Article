@@ -115,13 +115,13 @@ IncDec statement  &  Assignment \\ \hline
 \end{table}
 
 
-\section{赋值}
+\section{赋值} \label{sec:assignments}
 \begin{EBNF}
 Assignment = ExpressionList assign_op ExpressionList .
 
 assign_op = [ add_op | mul_op ] "=" .
 \end{EBNF}
-每一个左侧操作数都必须可寻址、映射索引表达式、或者空白标识符（只用于 \code|=| 赋值）。
+每一个左侧操作数都必须可寻址、或者是一个映射索引表达式、或者\hyperref[sec:blank identifier]{空白标识符}（只用于 \gocode|=| 赋值）。
 操作数可以使用圆括弧包含。
 \begin{golang}
 x = 1
@@ -130,28 +130,28 @@ a[i] = 23
 (k) = <-ch  // same as: k = <-ch
 \end{golang}
 
-一个赋值运算 \code|x op= y|，其中 op 为一个二元算术运算符，等价于 \code|x = x op (y)|，但是 \code|x| 只计算一次。
+一个赋值运算 \code|x op= y|，其中 op 为一个二元\hyperref[sec:arithmetic operators]{算术运算符}，等价于 \code|x = x op (y)|，但是 \code|x| 只计算一次。
 \code|op=| 构造是一个单一记号。
-在赋值运算中，左右侧表达式列表必须只含有单值表达式，且左侧表达式不能是空白标识符。
+在赋值运算中，左右侧表达式列表中的表达式必须只包含单值表达式，且表达式左侧不能是空白标识符。
 \begin{golang}
 a[i] <<= 2
 i &^= 1<<n
 \end{golang}
 
-一个元组赋值可以多值运算的结果独立的赋值给变量列表。
+元组赋值可以将多值运算的结果独立的赋值给变量列表。
 有两种赋值形式。
-第一种，右手侧是单个多值表达式，如函数调用，通道或映射运算，或类型断言。
-左侧操作数的数量必须匹配值的数量。比如，如果 \code|f| 是一返回两个值的函数，
+第一种，右手侧是单个多值表达式：如函数调用、\hyperref[sec:channel type]{通道}或映射运算、或类型断言。
+左侧操作数的数量必须匹配值的数量。例如，\gocode|f| 是一返回两个值的函数，
 \begin{golang}
 x, y = f()
 \end{golang}
 将第一个值赋值给 \code|x| 并将第二个值赋值给 \code|y|。
-在第二中形式中，操作数的数量必须等于右侧表达式的数量，每一个表达式必须是一个单值表达式，并且右侧第 n 个表达式会赋值给左侧的第 n 个操作数：
+在第二种形式中，左侧操作数的数量必须等于右侧表达式的数量，每一个表达式必须是一个单值表达式，并且右侧第 $n$ 个表达式会赋值给左侧的第 $n$ 个操作数：
 \begin{golang}
 one, two, three = '一', '二', '三'
 \end{golang}
 
-空白标识符提供一种忽视赋值语句中右侧值的方式：
+\hyperref[sec:blank identifier]{空白标识符}提供一种忽视赋值语句中右侧值的方式：
 \begin{golang}
 _ = x       // evaluate x but ignore it
 x, _ = f()  // evaluate f() but ignore second result value
@@ -159,7 +159,7 @@ x, _ = f()  // evaluate f() but ignore second result value
 
 赋值过程有两个阶段。
 首先，左侧表达式中的索引表达式和指针反引用（包括选择器中隐式的指针反引用）的操作数与右侧表达式会按照正常顺序计算。
-其次，赋值会按照从左向右的顺序展开。
+其次，赋值会按照从左向右的顺序展开执行。
 \begin{golang}
 a, b = b, a  // exchange a and b
 
@@ -402,11 +402,14 @@ RangeClause = [ ExpressionList "=" | IdentifierList ":=" ] "range" Expression .
 \end{EBNF}
 
 ``range'' 子部右侧表达式被称为 range 表达式，可以是一个数组、数组指针、切片、字符串、映射、或者允许接收操作的通道。
-如果作为操作数出现在赋值左侧，则必须是可寻址的，或为映射索引表达式；他们表示迭代变量。
-如果 range 表达式是要给通道，则至多允许一个迭代变量，否则可以多达两个。
-如果最后一个迭代变量是一个空白标识符，range 子部等价于无该标识符的相同子部。
+如果作为操作数出现在赋值左侧，则必须是可寻址的，或为映射索引表达式--表示迭代变量。
+如果 range 表达式是一个通道，则至多允许一个迭代变量，否则可以最多两个。
+如果最后一个迭代变量是一个\hyperref[sec:blank identifier]{空白标识符}，
+range 子部等价于无该标识符的相同子部。
 
-range 表达式 \code|x| 只会在循环开始前计算一次，有一个特例：如果至多有一个迭代变量并且 \code|len(x)| 是一个常量，则不会计算range表达式。
+range 表达式 \code|x| 会在循环开始前计算一次，
+有一个特例：如果至多有一个迭代变量并且 \code|len(x)| 是一个常量，
+则不会计算 range 表达式。
 
 左侧的函数调用在每次迭代中都会计算一次。
 在每一次迭代中，如果提供了相应的迭代变量，迭代值会按照如下方式提供：
@@ -483,7 +486,7 @@ GoStmt = "go" Expression .
 \end{EBNF}
 
 其中表达式必须是一个函数或方法调用；不能被圆括弧包含。
-调用内置函数的限制和\hyperref[sec:expression statements]{表达式语句}一样。
+内置函数的调用被限制为\hyperref[sec:expression statements]{表达式语句}。
 
 函数值和参数的计算和 goroutine 一样，但是和常规调用不同
 ——程序执行不会等待被调函数完成，被调函数会在新的 goroutine 中独立执行。
@@ -496,7 +499,7 @@ go func(ch chan<- bool) { for { sleep(10); ch <- true }} (c)
 
 \section{选择语句}
 一个 ``select'' 语句会选择一组可能会处理的 send 或 receive 操作。
-类似与 ``switch'' 语句，但是这一次所有的 case 都是通讯操作。
+类似于 ``switch'' 语句，但是这一次所有的 case 都是通讯操作。
 \begin{EBNF}
 SelectStmt = "select" "{" { CommClause } "}" .
 CommClause = CommCase ":" StatementList .
@@ -505,30 +508,33 @@ RecvStmt   = [ ExpressionList "=" | IdentifierList ":=" ] RecvExpr .
 RecvExpr   = Expression .
 \end{EBNF}
 
-一个带有 RecvStmt 的 case 会将 RecvExpr 的结果赋值给一个或两个变量，这些变量可以使用短变量声明来声明。
+一个带有 RecvStmt 的 case 会将 RecvExpr 的结果赋值给一个或两个变量，这些变量可以使用短变量来声明。
 RecvExpr 必须使用接收操作（可以使用圆括弧包含）。
 至多有一个默认 case，并且可以出现在 case 列表中的任何位置。
 
 执行一个 ``select'' 语句会有以下几个步骤：
 \begin{enumerate}
 \item 
-对于语句中的所有 case，一进入 ``select'' 语句，接收操作的通道操作数和通道以及发送语句的右手侧表达式就会按照源顺序计算一次。
-结果为接收或发送的通道的集合，以及相应的发送值。
-不管通讯操作是否被选择处理，计算时的任何副作用都会发送。
-RecvStmt 左手侧的表达式具有短变量声明或者尚未计算的赋值。
+对于语句中的所有 case，一进入 ``select'' 语句，
+接收操作的通道操作数、通道、以及发送语句的右手侧表达式就会按照源顺序计算一次。
+结果为接收或发送的通道集合，以及相应的发送值。
+不管通讯操作是否被选择处理，计算时的任何副作用都会发生。
+RecvStmt 左手侧具有短变量声明或者赋值的表达式尚未被计算。
 \item 
-如果一个或多个通讯可以被处理，则会通过伪随机算法选择其中的一个。
-否则，如果有 default case，则会选则该 case。
+如果其中一个或多个通讯可以被处理，则通过伪随机算法选择其中的一个。
+否则，若有 default case，则会选则该 case。
 如果没有 default case，``select'' 语句会一直阻塞到至少有一个通讯可以被处理。
 \item 
-除非被选择的 case 是 default case，则会执行各自的通讯操作。
+除非被选择的 case 是 default case，则会执行相应的通讯操作。
 \item 
-如果被选择的 case 是一个带有短变量声明或赋值的 RecvStmt，左手侧表达式会被计算，或者接收值会被赋值。
+如果被选择的 case 是一个带有短变量声明或赋值的 RecvStmt，
+左手侧表达式会被计算，或者接收值会被赋予。
 \item 
 执行被选择的 case 的语句列表。
 \end{enumerate}
 
-由于 \code|nil| 通道的通讯从不被处理，一个只有 \code|nil| 通道并且没有 default  case 的选择会一直阻塞。
+由于 \code|nil| 通道的通讯从不被处理，
+一个只有 \code|nil| 通道并且没有 default  case 的选择会一直阻塞。
 \begin{golang}
 var a []int
 var c, c1, c2, c3, c4 chan int

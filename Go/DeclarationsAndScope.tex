@@ -1,5 +1,5 @@
 % !TeX root = Main.tex
-\chapter{声明和作用域}
+\chapter{声明和作用域} \label{ch:declarations and scope}
 一个声明将一个非空白标识符绑定到一个常量、类型、变量、函数、标签或者包。
 程序中的每一个标识符必须被声明。
 相同块中不可以将重复声明一个标识符，并且标识符不可同时声明在文件块和包块中。
@@ -34,9 +34,9 @@ Go 使用块进行此法分区：
 和其他标识符相反，标签无区块作用域并且不会和非标签的标识符冲突。
 标签的作用域为声明所在的函数体内，并且不包含任何嵌套的函数体。
 
-\section{空白标识符}
-空白标识符通过下划线字符 \_ 表示。
-空白标识符用作匿名占位符并在声明、操作数和赋值中具有特殊意义，
+\section{空白标识符} \label{sec:blank identifier}
+空白标识符通过下划线 \gocode|_| 表示。
+空白标识符用作匿名占位符并在\hyperref[ch:declarations and scope]{声明}、操作数和赋值中具有特殊意义，
 
 \section{预声明标识符}
 下面标识符隐式的声明在全局区块中：
@@ -52,18 +52,19 @@ Go 使用块进行此法分区：
 \end{description}
 
 
-\section{导出的标识符}
+\section{导出的标识符} \label{sec:exported identifiers}
 一个标识符可以被导出，从而允许在其他包里访问。
-满足以下条件的标识符会被导出：
+同时满足以下条件的标识符会被导出：
 \begin{enumerate}
-\item 标识符名的首字符为大写的 Unicode 字母（Unicode 类别为 ``Lu''）；并且
-\item 标识符声明在包区块中或者是一个字段名或是一个方法名。
+\item 标识符名的首字符为大写的 Unicode 字母（Unicode 类别为 ``Lu''）；
+\item 标识符声明在\hyperref[ch:blocks]{包代码块}中，或者是一个\hyperref[sec:struct types]{字段名}，或是一个方法名。
 \end{enumerate}
-所有其他标识符不会导出。
+所有其他标识符不会被导出。
 
-\section{标识符的唯一性}
+\section{标识符的唯一性} \label{sec:uniqueness of identifiers}
 在给定的标识符集合中，如果一个标识符不同于集合中任何其他标识符，则称之为唯一。
-两个标识符的不同点在于拼写，或出现在不同的包中并且没有被导出。其他情况下，认为标识符相同。
+标识符如果拼写不同，则视为不同的标识符；或者如果出现在不同的包中并且没有被导出，也视作不同的标识符。
+其他情况下，认为标识符相同。
 
 \section{常量声明}
 一个常量声明将一组标识符（常量的名字）绑定到一组常量表达式的值。
@@ -331,7 +332,7 @@ func min(x int, y int) int {
 func flushICache(begin, end uintptr)  // implemented externally
 \end{lstlisting} 
 
-\section{方法声明}
+\section{方法声明} \label{sec:method declarations}
 一个方法是一个带有接收器的函数。
 一个方法声明会将一个标识符，即方法名，绑定到方法中，并使用接收器的基类型与方法进行关联。
 \begin{lstlisting}[style=golang]
